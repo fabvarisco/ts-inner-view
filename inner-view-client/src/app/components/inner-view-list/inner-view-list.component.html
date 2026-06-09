@@ -1,3 +1,7 @@
-<p>
-  inner-view-list works!
-</p>
+<ion-list>
+  <app-inner-view-card
+    *ngFor="let item of items; let i = index"
+    [item]="item"
+    [index]="i">
+  </app-inner-view-card>
+</ion-list>

@@ -1,3 +1,9 @@
-<p>
-  inner-view-card works!
-</p>
+<ion-card (click)="onCardClick()" button="true">
+  <ion-img [src]="item.thumb" [alt]="item.name"></ion-img>
+  <ion-card-header>
+    <ion-card-title>{{ item.name }}</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    {{ item.descriptions }}
+  </ion-card-content>
+</ion-card>

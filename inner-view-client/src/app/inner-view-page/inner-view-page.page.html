@@ -1,0 +1,19 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ currentItem?.name || 'Inner View' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <app-panoramic-viewer
+    *ngIf="currentItem"
+    [imagePath]="getPanoramicPath()">
+  </app-panoramic-viewer>
+
+  <div *ngIf="!currentItem" class="loading-container">
+    <p>Loading...</p>
+  </div>
+</ion-content>

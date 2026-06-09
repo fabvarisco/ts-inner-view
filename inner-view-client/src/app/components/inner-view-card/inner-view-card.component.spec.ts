@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { IonicModule } from '@ionic/angular';
 
 import { InnerViewCardComponent } from './inner-view-card.component';
 
@@ -9,8 +8,7 @@ describe('InnerViewCardComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ InnerViewCardComponent ],
-      imports: [IonicModule.forRoot()]
+      imports: [InnerViewCardComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(InnerViewCardComponent);

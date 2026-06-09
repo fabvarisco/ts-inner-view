@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { IonicModule } from '@ionic/angular';
 
 import { InnerViewListComponent } from './inner-view-list.component';
 
@@ -9,8 +8,7 @@ describe('InnerViewListComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ InnerViewListComponent ],
-      imports: [IonicModule.forRoot()]
+      imports: [InnerViewListComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(InnerViewListComponent);

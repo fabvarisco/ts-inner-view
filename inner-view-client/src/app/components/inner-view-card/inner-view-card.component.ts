@@ -1,17 +1,29 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg } from '@ionic/angular/standalone';
+import { InnerViewItem } from '../../models/inner-view.model';
 
 @Component({
   selector: 'app-inner-view-card',
   templateUrl: './inner-view-card.component.html',
   styleUrls: ['./inner-view-card.component.scss'],
+  standalone: true,
+  imports: [IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg]
 })
-export class InnerViewCardComponent  implements OnInit {
-  private _name:string;
-  private _thumb:string;
-  private _decription:string;  
+export class InnerViewCardComponent {
+  @Input() item!: InnerViewItem;
+  @Input() index!: number;
 
-  constructor() { }
+  private router = inject(Router);
 
-  ngOnInit() {}
+  // Keep legacy inputs for backward compatibility
+  @Input() name: string = '';
+  @Input() thumb: string = '';
+  @Input() descriptions: string = '';
 
+  onCardClick() {
+    this.router.navigate(['/inner-view-page', this.index], {
+      state: { item: this.item }
+    });
+  }
 }

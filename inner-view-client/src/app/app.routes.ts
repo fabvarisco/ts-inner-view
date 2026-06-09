@@ -10,4 +10,8 @@ export const routes: Routes = [
     redirectTo: 'home',
     pathMatch: 'full',
   },
+  {
+    path: 'inner-view-page/:id',
+    loadComponent: () => import('./inner-view-page/inner-view-page.page').then( m => m.InnerViewPagePage)
+  },
 ];
