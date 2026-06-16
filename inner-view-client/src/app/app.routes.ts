@@ -14,4 +14,16 @@ export const routes: Routes = [
     path: 'inner-view-page/:id',
     loadComponent: () => import('./inner-view-page/inner-view-page.page').then( m => m.InnerViewPagePage)
   },
+  {
+    path: 'profile',
+    loadComponent: () => import('./profile/profile.page').then(m => m.ProfilePage)
+  },
+  {
+    path: 'embed/:id',
+    loadComponent: () => import('./embed/embed.page').then(m => m.EmbedPage)
+  },
+  {
+    path: '**',
+    redirectTo: 'home'
+  },
 ];

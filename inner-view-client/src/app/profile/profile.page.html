@@ -1,0 +1,157 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Meu Perfil</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+
+  <!-- Cabeçalho do perfil -->
+  <div class="profile-header" *ngIf="user">
+    <ion-avatar class="profile-avatar">
+      <img [src]="user.avatar" [alt]="user.name" />
+    </ion-avatar>
+    <h2 class="profile-name">{{ user.name }}</h2>
+    <p class="profile-sub">{{ user.username }} &middot; {{ user.location }}</p>
+    <p class="profile-bio">{{ user.bio }}</p>
+    <div class="stats-row">
+      <div class="stat">
+        <span class="stat-value">{{ user.uploadCount }}</span>
+        <span class="stat-label">Uploads</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-value">{{ user.favoriteCount }}</span>
+        <span class="stat-label">Favoritos</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-value">{{ user.followerCount }}</span>
+        <span class="stat-label">Seguidores</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Segmentos -->
+  <ion-segment [value]="activeSegment" (ionChange)="onSegmentChange($event)" class="profile-segment">
+    <ion-segment-button value="uploads">
+      <ion-label>Uploads</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="favorites">
+      <ion-label>Favoritos</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+  <!-- Painel: Uploads -->
+  <div *ngIf="activeSegment === 'uploads'">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="6" *ngFor="let upload of uploads">
+          <ion-card class="upload-card">
+            <ion-img [src]="upload.thumb" [alt]="upload.name" class="upload-thumb"></ion-img>
+            <ion-card-header>
+              <ion-card-title class="upload-title">{{ upload.name }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="social-stats">
+                <span class="stat-item">
+                  <ion-icon name="heart-outline"></ion-icon> {{ upload.likes }}
+                </span>
+                <span class="stat-item">
+                  <ion-icon name="share-social-outline"></ion-icon> {{ upload.shares }}
+                </span>
+                <span class="stat-item">
+                  <ion-icon name="star-outline"></ion-icon> {{ upload.favorites }}
+                </span>
+              </div>
+              <div class="upload-actions">
+                <ion-button fill="outline" size="small" (click)="openEmbedModal(upload)">
+                  <ion-icon name="copy-outline" slot="start"></ion-icon>
+                  Embed
+                </ion-button>
+                <ion-button fill="clear" size="small" (click)="openEditSheet(upload)">
+                  <ion-icon name="pencil-outline" slot="start"></ion-icon>
+                  Editar
+                </ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+
+  <!-- Painel: Favoritos -->
+  <div *ngIf="activeSegment === 'favorites'">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="6" *ngFor="let fav of favorites; let i = index">
+          <app-inner-view-card
+            [item]="asFavoriteInnerViewItem(fav)"
+            [index]="i">
+          </app-inner-view-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+
+</ion-content>
+
+<!-- Modal: Embed / Compartilhar -->
+<ion-modal [isOpen]="isEmbedModalOpen" (didDismiss)="isEmbedModalOpen = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Embed / Compartilhar</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="isEmbedModalOpen = false">
+            <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="embed-section">
+        <h3>Link direto</h3>
+        <ion-item>
+          <ion-textarea [value]="embedLink" [readonly]="true" rows="2" autoGrow="false"></ion-textarea>
+        </ion-item>
+        <ion-button expand="block" fill="outline" (click)="copyToClipboard(embedLink)">
+          <ion-icon name="copy-outline" slot="start"></ion-icon>
+          Copiar link
+        </ion-button>
+      </div>
+
+      <div class="embed-section">
+        <h3>Código de embed</h3>
+        <ion-item>
+          <ion-textarea [value]="embedCode" [readonly]="true" rows="4" autoGrow="false"></ion-textarea>
+        </ion-item>
+        <ion-button expand="block" fill="outline" (click)="copyToClipboard(embedCode)">
+          <ion-icon name="copy-outline" slot="start"></ion-icon>
+          Copiar código
+        </ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- Action Sheet: Editar upload -->
+<ion-action-sheet
+  [isOpen]="isEditSheetOpen"
+  header="Opções do upload"
+  [buttons]="editSheetButtons"
+  (didDismiss)="isEditSheetOpen = false">
+</ion-action-sheet>
+
+<!-- Toast: feedback de ação -->
+<ion-toast
+  [isOpen]="isToastOpen"
+  [message]="toastMessage"
+  [duration]="2000"
+  position="bottom"
+  (didDismiss)="isToastOpen = false">
+</ion-toast>
