@@ -8,6 +8,7 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { eyeOutline, eyeOffOutline } from 'ionicons/icons';
+import { TranslatePipe } from '@ngx-translate/core';
 import { InnerViewItem } from '../models/inner-view.model';
 import { InnerViewService } from '../services/inner-view.service';
 import { PanoramicViewerComponent } from '../components/panoramic-viewer/panoramic-viewer.component';
@@ -20,7 +21,7 @@ import { PanoramicViewerComponent } from '../components/panoramic-viewer/panoram
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
-    CommonModule, FormsModule, PanoramicViewerComponent
+    CommonModule, FormsModule, PanoramicViewerComponent, TranslatePipe
   ]
 })
 export class InnerViewPagePage implements OnInit {

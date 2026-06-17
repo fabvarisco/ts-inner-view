@@ -11,6 +11,7 @@ import {
   heartOutline, shareSocialOutline, starOutline,
   pencilOutline, trashOutline, closeOutline, copyOutline
 } from 'ionicons/icons';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { InnerViewCardComponent } from '../components/inner-view-card/inner-view-card.component';
 import { UserService } from '../services/user.service';
 import { UserProfile, UserUpload, FavoriteItem } from '../models/user.model';
@@ -27,11 +28,13 @@ import { InnerViewItem } from '../models/inner-view.model';
     IonAvatar, IonImg, IonSegment, IonSegmentButton, IonLabel,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonButton, IonIcon, IonModal, IonActionSheet, IonItem, IonTextarea, IonToast, IonSearchbar,
-    InnerViewCardComponent
+    InnerViewCardComponent,
+    TranslatePipe
   ]
 })
 export class ProfilePage implements OnInit {
   private userService = inject(UserService);
+  private translate = inject(TranslateService);
 
   user: UserProfile | null = null;
   uploads: UserUpload[] = [];
@@ -95,22 +98,22 @@ export class ProfilePage implements OnInit {
   openEditSheet(upload: UserUpload) {
     this.editSheetButtons = [
       {
-        text: 'Renomear',
+        text: this.translate.instant('PROFILE.ACTION_SHEET.RENAME'),
         icon: 'pencil-outline',
         handler: () => {
-          this.showToast('Funcionalidade em breve');
+          this.showToast(this.translate.instant('PROFILE.TOAST.COMING_SOON'));
         }
       },
       {
-        text: 'Excluir',
+        text: this.translate.instant('PROFILE.ACTION_SHEET.DELETE'),
         icon: 'trash-outline',
         role: 'destructive',
         handler: () => {
-          this.showToast('Funcionalidade em breve');
+          this.showToast(this.translate.instant('PROFILE.TOAST.COMING_SOON'));
         }
       },
       {
-        text: 'Cancelar',
+        text: this.translate.instant('PROFILE.ACTION_SHEET.CANCEL'),
         role: 'cancel'
       }
     ];
@@ -119,7 +122,7 @@ export class ProfilePage implements OnInit {
 
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
-      this.showToast('Copiado!');
+      this.showToast(this.translate.instant('PROFILE.TOAST.COPIED'));
     });
   }
 

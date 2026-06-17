@@ -1,0 +1,45 @@
+{
+  "HOME": {
+    "SEARCH_PLACEHOLDER": "Search places..."
+  },
+  "PROFILE": {
+    "TITLE": "My Profile",
+    "STATS": {
+      "UPLOADS": "Uploads",
+      "FAVORITES": "Favorites",
+      "FOLLOWERS": "Followers"
+    },
+    "SEGMENT": {
+      "UPLOADS": "Uploads",
+      "FAVORITES": "Favorites"
+    },
+    "SEARCH": {
+      "UPLOADS": "Search uploads...",
+      "FAVORITES": "Search favorites..."
+    },
+    "BUTTON": {
+      "EMBED": "Embed",
+      "EDIT": "Edit"
+    },
+    "MODAL": {
+      "TITLE": "Embed / Share",
+      "DIRECT_LINK": "Direct link",
+      "COPY_LINK": "Copy link",
+      "EMBED_CODE": "Embed code",
+      "COPY_CODE": "Copy code"
+    },
+    "ACTION_SHEET": {
+      "HEADER": "Upload options",
+      "RENAME": "Rename",
+      "DELETE": "Delete",
+      "CANCEL": "Cancel"
+    },
+    "TOAST": {
+      "COPIED": "Copied!",
+      "COMING_SOON": "Feature coming soon"
+    }
+  },
+  "INNER_VIEW": {
+    "LOADING": "Loading..."
+  }
+}

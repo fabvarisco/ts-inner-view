@@ -3,13 +3,12 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>Meu Perfil</ion-title>
+    <ion-title>{{ 'PROFILE.TITLE' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
 
-  <!-- Cabeçalho do perfil -->
   <div class="profile-header" *ngIf="user">
     <ion-avatar class="profile-avatar">
       <img [src]="user.avatar" [alt]="user.name" />
@@ -20,35 +19,33 @@
     <div class="stats-row">
       <div class="stat">
         <span class="stat-value">{{ user.uploadCount }}</span>
-        <span class="stat-label">Uploads</span>
+        <span class="stat-label">{{ 'PROFILE.STATS.UPLOADS' | translate }}</span>
       </div>
       <div class="stat-divider"></div>
       <div class="stat">
         <span class="stat-value">{{ user.favoriteCount }}</span>
-        <span class="stat-label">Favoritos</span>
+        <span class="stat-label">{{ 'PROFILE.STATS.FAVORITES' | translate }}</span>
       </div>
       <div class="stat-divider"></div>
       <div class="stat">
         <span class="stat-value">{{ user.followerCount }}</span>
-        <span class="stat-label">Seguidores</span>
+        <span class="stat-label">{{ 'PROFILE.STATS.FOLLOWERS' | translate }}</span>
       </div>
     </div>
   </div>
 
-  <!-- Segmentos -->
   <ion-segment [value]="activeSegment" (ionChange)="onSegmentChange($event)" class="profile-segment">
     <ion-segment-button value="uploads">
-      <ion-label>Uploads</ion-label>
+      <ion-label>{{ 'PROFILE.SEGMENT.UPLOADS' | translate }}</ion-label>
     </ion-segment-button>
     <ion-segment-button value="favorites">
-      <ion-label>Favoritos</ion-label>
+      <ion-label>{{ 'PROFILE.SEGMENT.FAVORITES' | translate }}</ion-label>
     </ion-segment-button>
   </ion-segment>
 
-  <!-- Painel: Uploads -->
   <div *ngIf="activeSegment === 'uploads'">
     <ion-searchbar
-      placeholder="Buscar uploads..."
+      [placeholder]="'PROFILE.SEARCH.UPLOADS' | translate"
       (ionInput)="onSearchUploads($event)"
       animated="true">
     </ion-searchbar>
@@ -75,11 +72,11 @@
               <div class="upload-actions">
                 <ion-button fill="outline" size="small" (click)="openEmbedModal(upload)">
                   <ion-icon name="copy-outline" slot="start"></ion-icon>
-                  Embed
+                  {{ 'PROFILE.BUTTON.EMBED' | translate }}
                 </ion-button>
                 <ion-button fill="clear" size="small" (click)="openEditSheet(upload)">
                   <ion-icon name="pencil-outline" slot="start"></ion-icon>
-                  Editar
+                  {{ 'PROFILE.BUTTON.EDIT' | translate }}
                 </ion-button>
               </div>
             </ion-card-content>
@@ -89,10 +86,9 @@
     </ion-grid>
   </div>
 
-  <!-- Painel: Favoritos -->
   <div *ngIf="activeSegment === 'favorites'">
     <ion-searchbar
-      placeholder="Buscar favoritos..."
+      [placeholder]="'PROFILE.SEARCH.FAVORITES' | translate"
       (ionInput)="onSearchFavorites($event)"
       animated="true">
     </ion-searchbar>
@@ -110,12 +106,11 @@
 
 </ion-content>
 
-<!-- Modal: Embed / Compartilhar -->
 <ion-modal [isOpen]="isEmbedModalOpen" (didDismiss)="isEmbedModalOpen = false">
   <ng-template>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Embed / Compartilhar</ion-title>
+        <ion-title>{{ 'PROFILE.MODAL.TITLE' | translate }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="isEmbedModalOpen = false">
             <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -125,39 +120,37 @@
     </ion-header>
     <ion-content class="ion-padding">
       <div class="embed-section">
-        <h3>Link direto</h3>
+        <h3>{{ 'PROFILE.MODAL.DIRECT_LINK' | translate }}</h3>
         <ion-item>
           <ion-textarea [value]="embedLink" [readonly]="true" rows="2" autoGrow="false"></ion-textarea>
         </ion-item>
         <ion-button expand="block" fill="outline" (click)="copyToClipboard(embedLink)">
           <ion-icon name="copy-outline" slot="start"></ion-icon>
-          Copiar link
+          {{ 'PROFILE.MODAL.COPY_LINK' | translate }}
         </ion-button>
       </div>
 
       <div class="embed-section">
-        <h3>Código de embed</h3>
+        <h3>{{ 'PROFILE.MODAL.EMBED_CODE' | translate }}</h3>
         <ion-item>
           <ion-textarea [value]="embedCode" [readonly]="true" rows="4" autoGrow="false"></ion-textarea>
         </ion-item>
         <ion-button expand="block" fill="outline" (click)="copyToClipboard(embedCode)">
           <ion-icon name="copy-outline" slot="start"></ion-icon>
-          Copiar código
+          {{ 'PROFILE.MODAL.COPY_CODE' | translate }}
         </ion-button>
       </div>
     </ion-content>
   </ng-template>
 </ion-modal>
 
-<!-- Action Sheet: Editar upload -->
 <ion-action-sheet
   [isOpen]="isEditSheetOpen"
-  header="Opções do upload"
+  [header]="'PROFILE.ACTION_SHEET.HEADER' | translate"
   [buttons]="editSheetButtons"
   (didDismiss)="isEditSheetOpen = false">
 </ion-action-sheet>
 
-<!-- Toast: feedback de ação -->
 <ion-toast
   [isOpen]="isToastOpen"
   [message]="toastMessage"

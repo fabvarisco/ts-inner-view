@@ -1,0 +1,45 @@
+{
+  "HOME": {
+    "SEARCH_PLACEHOLDER": "Buscar lugares..."
+  },
+  "PROFILE": {
+    "TITLE": "Meu Perfil",
+    "STATS": {
+      "UPLOADS": "Uploads",
+      "FAVORITES": "Favoritos",
+      "FOLLOWERS": "Seguidores"
+    },
+    "SEGMENT": {
+      "UPLOADS": "Uploads",
+      "FAVORITES": "Favoritos"
+    },
+    "SEARCH": {
+      "UPLOADS": "Buscar uploads...",
+      "FAVORITES": "Buscar favoritos..."
+    },
+    "BUTTON": {
+      "EMBED": "Embed",
+      "EDIT": "Editar"
+    },
+    "MODAL": {
+      "TITLE": "Embed / Compartilhar",
+      "DIRECT_LINK": "Link direto",
+      "COPY_LINK": "Copiar link",
+      "EMBED_CODE": "Código de embed",
+      "COPY_CODE": "Copiar código"
+    },
+    "ACTION_SHEET": {
+      "HEADER": "Opções do upload",
+      "RENAME": "Renomear",
+      "DELETE": "Excluir",
+      "CANCEL": "Cancelar"
+    },
+    "TOAST": {
+      "COPIED": "Copiado!",
+      "COMING_SOON": "Funcionalidade em breve"
+    }
+  },
+  "INNER_VIEW": {
+    "LOADING": "Carregando..."
+  }
+}

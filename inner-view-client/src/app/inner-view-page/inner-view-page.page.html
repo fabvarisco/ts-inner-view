@@ -14,7 +14,7 @@
   </app-panoramic-viewer>
 
   <div *ngIf="!currentItem" class="loading-container">
-    <p>Loading...</p>
+    <p>{{ 'INNER_VIEW.LOADING' | translate }}</p>
   </div>
 
   <div *ngIf="currentItem" class="info-panel-wrapper">
