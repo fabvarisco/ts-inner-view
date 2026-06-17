@@ -2,7 +2,12 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton } from '@ionic/angular/standalone';
+import {
+  IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton,
+  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon
+} from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { eyeOutline, eyeOffOutline } from 'ionicons/icons';
 import { InnerViewItem } from '../models/inner-view.model';
 import { InnerViewService } from '../services/inner-view.service';
 import { PanoramicViewerComponent } from '../components/panoramic-viewer/panoramic-viewer.component';
@@ -14,14 +19,21 @@ import { PanoramicViewerComponent } from '../components/panoramic-viewer/panoram
   standalone: true,
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton,
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
     CommonModule, FormsModule, PanoramicViewerComponent
   ]
 })
 export class InnerViewPagePage implements OnInit {
   currentItem: InnerViewItem | null = null;
+  infoPanelVisible = true;
+
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private innerViewService = inject(InnerViewService);
+
+  constructor() {
+    addIcons({ eyeOutline, eyeOffOutline });
+  }
 
   ngOnInit() {
     // Try to get item from router state first

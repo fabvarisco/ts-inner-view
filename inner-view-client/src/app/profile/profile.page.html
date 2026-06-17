@@ -47,9 +47,14 @@
 
   <!-- Painel: Uploads -->
   <div *ngIf="activeSegment === 'uploads'">
+    <ion-searchbar
+      placeholder="Buscar uploads..."
+      (ionInput)="onSearchUploads($event)"
+      animated="true">
+    </ion-searchbar>
     <ion-grid>
       <ion-row>
-        <ion-col size="6" *ngFor="let upload of uploads">
+        <ion-col size="6" *ngFor="let upload of filteredUploads">
           <ion-card class="upload-card">
             <ion-img [src]="upload.thumb" [alt]="upload.name" class="upload-thumb"></ion-img>
             <ion-card-header>
@@ -86,9 +91,14 @@
 
   <!-- Painel: Favoritos -->
   <div *ngIf="activeSegment === 'favorites'">
+    <ion-searchbar
+      placeholder="Buscar favoritos..."
+      (ionInput)="onSearchFavorites($event)"
+      animated="true">
+    </ion-searchbar>
     <ion-grid>
       <ion-row>
-        <ion-col size="6" *ngFor="let fav of favorites; let i = index">
+        <ion-col size="6" *ngFor="let fav of filteredFavorites; let i = index">
           <app-inner-view-card
             [item]="asFavoriteInnerViewItem(fav)"
             [index]="i">

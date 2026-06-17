@@ -1,29 +1,54 @@
-import { Component, Input, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, Input, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { IonSpinner } from '@ionic/angular/standalone';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 @Component({
   selector: 'app-panoramic-viewer',
   standalone: true,
+  imports: [IonSpinner],
   template: `
     <div #canvasContainer class="canvas-container"></div>
+    @if (loading) {
+      <div class="loading-overlay">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    }
   `,
   styles: [`
     :host {
       display: block;
       width: 100%;
       height: 100%;
+      position: relative;
     }
 
     .canvas-container {
       width: 100%;
       height: 100%;
     }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    ion-spinner {
+      width: 48px;
+      height: 48px;
+      color: #fff;
+    }
   `]
 })
-export class PanoramicViewerComponent implements OnInit, AfterViewInit, OnDestroy {
+export class PanoramicViewerComponent implements AfterViewInit, OnDestroy {
   @ViewChild('canvasContainer', { static: true }) canvasContainer!: ElementRef<HTMLDivElement>;
   @Input() imagePath: string = '';
+
+  loading = true;
 
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
@@ -31,14 +56,13 @@ export class PanoramicViewerComponent implements OnInit, AfterViewInit, OnDestro
   private controls!: OrbitControls;
   private animationFrameId: number | null = null;
 
-  ngOnInit() {
-    this.initThreeJS();
-  }
-
   ngAfterViewInit() {
-    if (this.imagePath) {
-      this.loadPanorama();
-    }
+    setTimeout(() => {
+      this.initThreeJS();
+      if (this.imagePath) {
+        this.loadPanorama();
+      }
+    }, 0);
   }
 
   ngOnDestroy() {
@@ -90,23 +114,17 @@ export class PanoramicViewerComponent implements OnInit, AfterViewInit, OnDestro
       (texture) => {
         texture.colorSpace = THREE.SRGBColorSpace;
 
-        // Create sphere geometry
         const geometry = new THREE.SphereGeometry(500, 60, 40);
-        // Scale negatively to see inside
         geometry.scale(-1, 1, 1);
 
-        // Create material with texture
-        const material = new THREE.MeshBasicMaterial({
-          map: texture
-        });
-
-        // Create mesh and add to scene
-        const mesh = new THREE.Mesh(geometry, material);
+        const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ map: texture }));
         this.scene.add(mesh);
+        this.loading = false;
       },
       undefined,
       (error) => {
         console.error('Error loading panoramic image:', error);
+        this.loading = false;
       }
     );
   }

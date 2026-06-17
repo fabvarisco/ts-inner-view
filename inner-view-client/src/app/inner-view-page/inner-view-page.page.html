@@ -16,4 +16,22 @@
   <div *ngIf="!currentItem" class="loading-container">
     <p>Loading...</p>
   </div>
+
+  <div *ngIf="currentItem" class="info-panel-wrapper">
+    <ion-button
+      class="toggle-btn"
+      fill="solid"
+      size="small"
+      color="dark"
+      (click)="infoPanelVisible = !infoPanelVisible">
+      <ion-icon slot="icon-only" [name]="infoPanelVisible ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+    </ion-button>
+
+    <ion-card *ngIf="infoPanelVisible" class="info-card">
+      <ion-card-header>
+        <ion-card-title>{{ currentItem.name }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>{{ currentItem.descriptions }}</ion-card-content>
+    </ion-card>
+  </div>
 </ion-content>

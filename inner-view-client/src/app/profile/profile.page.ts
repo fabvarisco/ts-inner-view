@@ -4,7 +4,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonBackButton, IonButtons,
   IonAvatar, IonImg, IonSegment, IonSegmentButton, IonLabel,
   IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-  IonButton, IonIcon, IonModal, IonActionSheet, IonItem, IonTextarea, IonToast
+  IonButton, IonIcon, IonModal, IonActionSheet, IonItem, IonTextarea, IonToast, IonSearchbar
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -26,7 +26,7 @@ import { InnerViewItem } from '../models/inner-view.model';
     IonHeader, IonToolbar, IonTitle, IonContent, IonBackButton, IonButtons,
     IonAvatar, IonImg, IonSegment, IonSegmentButton, IonLabel,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-    IonButton, IonIcon, IonModal, IonActionSheet, IonItem, IonTextarea, IonToast,
+    IonButton, IonIcon, IonModal, IonActionSheet, IonItem, IonTextarea, IonToast, IonSearchbar,
     InnerViewCardComponent
   ]
 })
@@ -35,7 +35,9 @@ export class ProfilePage implements OnInit {
 
   user: UserProfile | null = null;
   uploads: UserUpload[] = [];
+  filteredUploads: UserUpload[] = [];
   favorites: FavoriteItem[] = [];
+  filteredFavorites: FavoriteItem[] = [];
 
   activeSegment = 'uploads';
 
@@ -55,12 +57,32 @@ export class ProfilePage implements OnInit {
 
   ngOnInit() {
     this.userService.getUser().subscribe({ next: (u) => (this.user = u) });
-    this.userService.getUserUploads().subscribe({ next: (u) => (this.uploads = u) });
-    this.userService.getFavorites().subscribe({ next: (f) => (this.favorites = f) });
+    this.userService.getUserUploads().subscribe({ next: (u) => { this.uploads = u; this.filteredUploads = u; } });
+    this.userService.getFavorites().subscribe({ next: (f) => { this.favorites = f; this.filteredFavorites = f; } });
   }
 
   onSegmentChange(event: any) {
     this.activeSegment = event.detail.value;
+  }
+
+  onSearchUploads(event: any) {
+    const query = event.detail.value?.toLowerCase().trim() ?? '';
+    this.filteredUploads = query
+      ? this.uploads.filter(u =>
+          u.name.toLowerCase().includes(query) ||
+          u.descriptions.toLowerCase().includes(query)
+        )
+      : this.uploads;
+  }
+
+  onSearchFavorites(event: any) {
+    const query = event.detail.value?.toLowerCase().trim() ?? '';
+    this.filteredFavorites = query
+      ? this.favorites.filter(f =>
+          f.name.toLowerCase().includes(query) ||
+          f.descriptions.toLowerCase().includes(query)
+        )
+      : this.favorites;
   }
 
   openEmbedModal(upload: UserUpload) {

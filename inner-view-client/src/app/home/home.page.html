@@ -1,22 +1,21 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Inner Views
-    </ion-title>
+    <ion-title>Inner Views</ion-title>
     <ion-buttons slot="end">
       <ion-button [routerLink]="['/profile']">
         <ion-icon name="person-circle-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+  <ion-toolbar>
+    <ion-searchbar
+      placeholder="Buscar lugares..."
+      (ionInput)="onSearch($event)"
+      animated="true">
+    </ion-searchbar>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Inner Views</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <app-inner-view-list [items]="innerViewItems"></app-inner-view-list>
+  <app-inner-view-list [items]="filteredItems"></app-inner-view-list>
 </ion-content>

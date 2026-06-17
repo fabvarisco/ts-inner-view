@@ -1,9 +1,30 @@
 <ion-card (click)="onCardClick()" button="true">
-  <ion-img [src]="item.thumb" [alt]="item.name"></ion-img>
+  <div class="img-wrapper">
+    <ion-skeleton-text *ngIf="!imageLoaded" animated class="img-skeleton"></ion-skeleton-text>
+    <ion-img
+      [src]="item.thumb"
+      [alt]="item.name"
+      [class.hidden]="!imageLoaded"
+      (ionImgDidLoad)="imageLoaded = true"
+      (ionError)="imageLoaded = true">
+    </ion-img>
+  </div>
   <ion-card-header>
     <ion-card-title>{{ item.name }}</ion-card-title>
   </ion-card-header>
   <ion-card-content>
     {{ item.descriptions }}
   </ion-card-content>
+  <div class="card-actions">
+    <ion-button fill="clear" size="small" (click)="onLike($event)" [color]="liked ? 'danger' : 'medium'">
+      <ion-icon slot="start" [name]="liked ? 'heart' : 'heart-outline'"></ion-icon>
+      {{ likes }}
+    </ion-button>
+    <ion-button fill="clear" size="small" (click)="onFavorite($event)" [color]="favorited ? 'warning' : 'medium'">
+      <ion-icon slot="icon-only" [name]="favorited ? 'star' : 'star-outline'"></ion-icon>
+    </ion-button>
+    <ion-button fill="clear" size="small" color="medium" (click)="onShare($event)">
+      <ion-icon slot="icon-only" name="share-social-outline"></ion-icon>
+    </ion-button>
+  </div>
 </ion-card>
