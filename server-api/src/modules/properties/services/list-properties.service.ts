@@ -1,0 +1,55 @@
+import { Injectable } from '@nestjs/common';
+import { Prisma } from 'generated/prisma/client';
+import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { ListPropertiesDto } from '../dto/list-properties.dto';
+
+const PROPERTY_SELECT = {
+  id: true, code: true, title: true, description: true,
+  type: true, purpose: true, price: true, totalArea: true,
+  status: true, agencyId: true, agentId: true,
+  createdAt: true, updatedAt: true, address: true,
+} as const;
+
+@Injectable()
+export class ListPropertiesService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async execute(query: ListPropertiesDto) {
+    const { page, limit, type, purpose, status, city, state, district,
+            priceMin, priceMax, agencyId, search } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.PropertyWhereInput = {
+      status,
+      ...(type && { type }),
+      ...(purpose && { purpose }),
+      ...(agencyId && { agencyId }),
+      ...((priceMin !== undefined || priceMax !== undefined) && {
+        price: {
+          ...(priceMin !== undefined && { gte: priceMin }),
+          ...(priceMax !== undefined && { lte: priceMax }),
+        },
+      }),
+      ...((city || state || district) && {
+        address: {
+          ...(city && { city: { contains: city, mode: 'insensitive' } }),
+          ...(state && { state }),
+          ...(district && { district: { contains: district, mode: 'insensitive' } }),
+        },
+      }),
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.property.findMany({ where, skip, take: limit, select: PROPERTY_SELECT, orderBy: { createdAt: 'desc' } }),
+      this.prisma.property.count({ where }),
+    ]);
+
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+  }
+}

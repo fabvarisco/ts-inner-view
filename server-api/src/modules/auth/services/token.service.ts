@@ -1,0 +1,40 @@
+import { Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
+import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { JwtPayload } from '../../../common/strategies/jwt-access.strategy';
+
+const SALT_ROUNDS = 10;
+const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+@Injectable()
+export class TokenService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+  ) {}
+
+  async issue(payload: JwtPayload) {
+    const accessToken = this.jwt.sign(payload, {
+      secret: process.env.JWT_ACCESS_SECRET ?? 'access-secret',
+      expiresIn: '15m',
+    });
+
+    const sessionId = randomUUID();
+    const expiresAt = new Date(Date.now() + REFRESH_TTL_MS);
+
+    const refreshToken = this.jwt.sign(
+      { sub: payload.sub, sessionId },
+      { secret: process.env.JWT_REFRESH_SECRET ?? 'refresh-secret', expiresIn: '7d' },
+    );
+
+    const hashedToken = await bcrypt.hash(refreshToken, SALT_ROUNDS);
+
+    await this.prisma.session.create({
+      data: { id: sessionId, userId: payload.sub, hashedToken, expiresAt },
+    });
+
+    return { accessToken, refreshToken };
+  }
+}
