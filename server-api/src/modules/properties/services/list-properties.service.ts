@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from 'generated/prisma/client';
+import { JwtPayload } from '../../../common/strategies/jwt-access.strategy';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { ListPropertiesDto } from '../dto/list-properties.dto';
 
@@ -14,16 +15,15 @@ const PROPERTY_SELECT = {
 export class ListPropertiesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async execute(query: ListPropertiesDto) {
-    const { page, limit, type, purpose, status, city, state, district,
-            priceMin, priceMax, agencyId, search } = query;
+  async execute(query: ListPropertiesDto, currentUser: JwtPayload) {
+    const { page, limit, type, purpose, status, city, state, district, priceMin, priceMax, search } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.PropertyWhereInput = {
+      agencyId: currentUser.agencyId,
       status,
       ...(type && { type }),
       ...(purpose && { purpose }),
-      ...(agencyId && { agencyId }),
       ...((priceMin !== undefined || priceMax !== undefined) && {
         price: {
           ...(priceMin !== undefined && { gte: priceMin }),

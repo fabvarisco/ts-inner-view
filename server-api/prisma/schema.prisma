@@ -13,25 +13,31 @@ enum UserType {
 }
 
 enum PropertyType {
-  HOUSE        // Casa
-  APARTMENT    // Apartamento
-  LAND         // Terreno
-  COMMERCIAL   // Comercial
-  RURAL        // Rural
-  OFFICE       // Escritório
+  HOUSE // Casa
+  APARTMENT // Apartamento
+  LAND // Terreno
+  COMMERCIAL // Comercial
+  RURAL // Rural
+  OFFICE // Escritório
 }
 
 enum PropertyPurpose {
-  SALE         // Venda
-  RENT         // Aluguel
+  SALE // Venda
+  RENT // Aluguel
   SALE_OR_RENT // Venda ou Aluguel
 }
 
 enum PropertyStatus {
-  AVAILABLE    // Disponível
-  SOLD         // Vendido
-  RENTED       // Alugado
-  UNAVAILABLE  // Indisponível
+  AVAILABLE // Disponível
+  SOLD // Vendido
+  RENTED // Alugado
+  UNAVAILABLE // Indisponível
+}
+
+enum VirtualTourStatus {
+  DRAFT // Rascunho
+  PUBLISHED // Publicado
+  ARCHIVED // Arquivado
 }
 
 model User {
@@ -43,7 +49,7 @@ model User {
 
   // específico de Corretor
   licenseNumber String? // creci
-  agency        Agency?   @relation(fields: [agencyId], references: [id]) // imobiliaria
+  agency        Agency? @relation(fields: [agencyId], references: [id]) // imobiliaria
   agencyId      String?
 
   properties Property[] // imoveis
@@ -83,14 +89,14 @@ model Agency {
 }
 
 model Property {
-  id          String  @id @default(uuid())
-  code        String  @unique // codigo
+  id          String          @id @default(uuid())
+  code        String          @unique // codigo
   title       String // titulo
   description String? // descricao
-  type        PropertyType    // tipo
+  type        PropertyType // tipo
   purpose     PropertyPurpose // finalidade
-  price       Float?          // valor
-  totalArea   Float?          // areaTotal
+  price       Float? // valor
+  totalArea   Float? // areaTotal
   status      PropertyStatus  @default(AVAILABLE)
 
   agency   Agency  @relation(fields: [agencyId], references: [id]) // imobiliaria
@@ -124,9 +130,9 @@ model Address {
 }
 
 model VirtualTour {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  status    String
+  id        String            @id @default(uuid())
+  createdAt DateTime          @default(now())
+  status    VirtualTourStatus @default(DRAFT)
 
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade) // imovel
   propertyId String   @unique
@@ -141,7 +147,7 @@ model VirtualTour {
 model Panorama {
   id              String  @id @default(uuid())
   roomName        String // nomeComodo
-  imageFile       String // arquivoImagem
+  imageData       String  @db.Text // base64 JPEG
   order           Int     @default(0) // ordem
   initialPanorama Boolean @default(false) // panoramaInicial
 

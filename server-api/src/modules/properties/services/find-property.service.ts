@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { JwtPayload } from '../../../common/strategies/jwt-access.strategy';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 
 const PROPERTY_DETAIL_SELECT = {
@@ -13,8 +14,11 @@ const PROPERTY_DETAIL_SELECT = {
 export class FindPropertyService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async execute(id: string) {
-    const property = await this.prisma.property.findUnique({ where: { id }, select: PROPERTY_DETAIL_SELECT });
+  async execute(id: string, currentUser: JwtPayload) {
+    const property = await this.prisma.property.findFirst({
+      where: { id, agencyId: currentUser.agencyId },
+      select: PROPERTY_DETAIL_SELECT,
+    });
     if (!property) throw new NotFoundException('Property not found');
     return property;
   }

@@ -12,7 +12,6 @@ export const ListPropertiesSchema = z.object({
   district: z.string().optional(),
   priceMin: z.coerce.number().positive().optional(),
   priceMax: z.coerce.number().positive().optional(),
-  agencyId: z.string().uuid().optional(),
   search: z.string().optional(),
 });
 

@@ -1,11 +1,17 @@
-import { Body, Controller, Post, UseGuards, UsePipes } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiCreatedResponse, ApiConflictResponse } from '@nestjs/swagger';
-import { JwtAccessGuard } from '../../../common/guards/jwt-access.guard';
-import { AdminGuard } from '../../../common/guards/admin.guard';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { JwtPayload } from '../../../common/strategies/jwt-access.strategy';
+import { AdminGuard } from '../../../common/guards/admin.guard';
+import { JwtAccessGuard } from '../../../common/guards/jwt-access.guard';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
-import { CreateUserSchema, CreateUserDto } from '../dto/create-user.dto';
+import { JwtPayload } from '../../../common/strategies/jwt-access.strategy';
+import { CreateUserDto, CreateUserSchema } from '../dto/create-user.dto';
 import { CreateUserService } from '../services/create-user.service';
 
 @ApiTags('Users')
@@ -19,8 +25,10 @@ export class CreateUserController {
   @ApiOperation({ summary: 'Cria um novo usuário na imobiliária' })
   @ApiCreatedResponse({ description: 'Usuário criado' })
   @ApiConflictResponse({ description: 'Email já em uso' })
-  @UsePipes(new ZodValidationPipe(CreateUserSchema))
-  create(@Body() dto: CreateUserDto, @CurrentUser() user: JwtPayload) {
+  create(
+    @Body(new ZodValidationPipe(CreateUserSchema)) dto: CreateUserDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
     return this.createUserService.execute(dto, user);
   }
 }
