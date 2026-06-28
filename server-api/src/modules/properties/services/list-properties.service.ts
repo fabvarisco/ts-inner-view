@@ -39,8 +39,14 @@ export class ListPropertiesService {
       }),
       ...(search && {
         OR: [
+          { code: { contains: search, mode: 'insensitive' } },
           { title: { contains: search, mode: 'insensitive' } },
           { description: { contains: search, mode: 'insensitive' } },
+          { address: { street: { contains: search, mode: 'insensitive' } } },
+          { address: { district: { contains: search, mode: 'insensitive' } } },
+          { address: { city: { contains: search, mode: 'insensitive' } } },
+          { address: { state: { contains: search, mode: 'insensitive' } } },
+          { address: { zipCode: { contains: search, mode: 'insensitive' } } },
         ],
       }),
     };
