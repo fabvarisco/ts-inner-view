@@ -5,16 +5,17 @@ import { Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
   IonButton, IonIcon, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption,
-  IonList, IonListHeader, IonSpinner,
+  IonList, IonListHeader, IonSpinner, IonModal,
   AlertController, ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, trashOutline } from 'ionicons/icons';
+import { addCircleOutline, trashOutline, eyeOutline, closeOutline } from 'ionicons/icons';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { PropertyService } from '../services/property.service';
 import { VirtualTourService } from '../services/virtual-tour.service';
-import { Property } from '../models/property.model';
+import { Panorama } from '../models/virtual-tour.model';
+import { PanoramicViewerComponent } from '../components/panoramic-viewer/panoramic-viewer.component';
 
 interface PanoramaItem {
   roomName: string;
@@ -32,7 +33,8 @@ interface PanoramaItem {
     FormsModule,
     IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
     IonButton, IonIcon, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption,
-    IonList, IonListHeader, IonSpinner,
+    IonList, IonListHeader, IonSpinner, IonModal,
+    PanoramicViewerComponent,
     TranslatePipe,
   ],
 })
@@ -44,6 +46,8 @@ export class UploadTourPage {
   purpose = '';
   panoramas: PanoramaItem[] = [];
   submitting = false;
+  isPreviewOpen = false;
+  previewPanoramas: Panorama[] = [];
 
   readonly propertyTypes = ['HOUSE', 'APARTMENT', 'LAND', 'COMMERCIAL', 'RURAL', 'OFFICE'];
   readonly purposes = ['SALE', 'RENT', 'SALE_OR_RENT'];
@@ -56,7 +60,7 @@ export class UploadTourPage {
   private translate = inject(TranslateService);
 
   constructor() {
-    addIcons({ addCircleOutline, trashOutline });
+    addIcons({ addCircleOutline, trashOutline, eyeOutline, closeOutline });
   }
 
   get canSubmit(): boolean {
@@ -84,6 +88,19 @@ export class UploadTourPage {
     this.panoramas.splice(index, 1);
   }
 
+  openPreview() {
+    this.previewPanoramas = this.panoramas.map((p, i) => ({
+      id: `preview-${i}`,
+      roomName: p.roomName,
+      imageData: p.imageData,
+      order: i,
+      initialPanorama: i === 0,
+      originHotspots: [],
+      measurements: [],
+    }));
+    this.isPreviewOpen = true;
+  }
+
   async onSubmit() {
     if (!this.canSubmit) return;
 
@@ -99,9 +116,8 @@ export class UploadTourPage {
         })
       );
 
-      let tourId: string | null = null;
       if (this.panoramas.length > 0) {
-        const tour = await firstValueFrom(
+        await firstValueFrom(
           this.virtualTourService.createTour(
             property.id,
             this.panoramas.map((p, i) => ({
@@ -112,19 +128,13 @@ export class UploadTourPage {
             }))
           )
         );
-        tourId = tour.id;
       }
 
-      const propertyWithTour: Property = {
-        ...property,
-        virtualTour: tourId ? { id: tourId, status: 'PUBLISHED' } : null,
-      };
-
-      this.router.navigate(['/inner-view-page', property.id], {
-        state: { property: propertyWithTour },
-      });
+      await this.showToast('UPLOAD.SUCCESS', 'success');
+      this.router.navigate(['/home']);
     } catch {
       this.showToast('UPLOAD.ERROR', 'danger');
+    } finally {
       this.submitting = false;
     }
   }

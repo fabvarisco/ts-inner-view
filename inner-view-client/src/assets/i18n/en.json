@@ -55,6 +55,8 @@
     "NO_IMAGES": "No images added yet.",
     "SUBMIT": "Create tour",
     "SUBMITTING": "Creating...",
+    "PREVIEW": "Preview",
+    "SUCCESS": "Tour created successfully!",
     "ERROR": "Failed to create the tour.",
     "TYPE": {
       "HOUSE": "House",

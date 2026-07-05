@@ -61,6 +61,21 @@ export class InnerViewPagePage implements OnInit {
       this.property = stateProperty;
       if (stateProperty.virtualTour?.id) {
         this.loadTour(stateProperty.virtualTour.id);
+      } else if (stateProperty.virtualTour === undefined) {
+        this.propertyService.findProperty(id).subscribe({
+          next: (p) => {
+            this.property = p;
+            if (p.virtualTour?.id) {
+              this.loadTour(p.virtualTour.id);
+            } else {
+              this.loading = false;
+            }
+          },
+          error: () => {
+            this.loading = false;
+            this.loadError = true;
+          }
+        });
       } else {
         this.loading = false;
       }

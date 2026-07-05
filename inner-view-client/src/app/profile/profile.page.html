@@ -51,6 +51,9 @@
       <ion-row>
         <ion-col size="6" *ngFor="let property of filteredProperties">
           <ion-card class="upload-card">
+            @if (property.virtualTour) {
+              <img class="upload-thumb" [src]="thumbnailUrl(property.virtualTour.id)" alt="" />
+            }
             <ion-card-header>
               <ion-card-title class="upload-title">{{ property.title }}</ion-card-title>
             </ion-card-header>

@@ -9,6 +9,7 @@ const PROPERTY_SELECT = {
   type: true, purpose: true, price: true, totalArea: true,
   status: true, agencyId: true, agentId: true,
   createdAt: true, updatedAt: true, address: true,
+  virtualTour: { select: { id: true, status: true } },
 } as const;
 
 @Injectable()

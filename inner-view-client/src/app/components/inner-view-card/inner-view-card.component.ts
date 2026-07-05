@@ -7,6 +7,7 @@ import {
 import { addIcons } from 'ionicons';
 import { heartOutline, heart, starOutline, star, shareSocialOutline, locationOutline } from 'ionicons/icons';
 import { Property } from '../../models/property.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-inner-view-card',
@@ -52,6 +53,10 @@ export class InnerViewCardComponent {
   onShare(event: Event) {
     event.stopPropagation();
     this.shareClick.emit();
+  }
+
+  get thumbnailUrl(): string {
+    return `${environment.apiUrl}/virtual-tours/${this.item.virtualTour!.id}/thumbnail`;
   }
 
   get locationLabel(): string {

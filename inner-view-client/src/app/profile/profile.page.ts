@@ -18,6 +18,7 @@ import { UserService } from '../services/user.service';
 import { PropertyService } from '../services/property.service';
 import { UserProfile } from '../models/user.model';
 import { Property } from '../models/property.model';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -141,6 +142,10 @@ export class ProfilePage implements OnInit {
     navigator.clipboard.writeText(text).then(() => {
       this.showToast(this.translate.instant('PROFILE.TOAST.COPIED'));
     });
+  }
+
+  thumbnailUrl(tourId: string): string {
+    return `${environment.apiUrl}/virtual-tours/${tourId}/thumbnail`;
   }
 
   get roleLabel(): string {

@@ -1,4 +1,10 @@
 <ion-card (click)="onCardClick()" button="true">
+  @if (item.virtualTour) {
+    <div class="card-thumbnail">
+      <img [src]="thumbnailUrl" alt="" />
+    </div>
+  }
+
   <div class="card-badge">
     @if (item.virtualTour) {
       <span class="badge-tour">360°</span>
