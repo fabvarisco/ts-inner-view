@@ -91,6 +91,11 @@
     "DELETE_CONFIRM": "Delete",
     "DELETE_TOUR_ERROR": "Failed to delete the tour.",
     "DELETE_PANORAMA_SUCCESS": "Panorama deleted.",
-    "DELETE_PANORAMA_ERROR": "Failed to delete the panorama."
+    "DELETE_PANORAMA_ERROR": "Failed to delete the panorama.",
+    "HOTSPOT_SELECT_TARGET": "Select destination",
+    "HOTSPOT_NO_TARGET": "Add more images to create hotspots",
+    "HOTSPOT_CREATED": "Hotspot created!",
+    "HOTSPOT_ERROR": "Failed to create hotspot",
+    "HOTSPOT_EDIT_HINT": "Click the panorama to add a navigation point"
   }
 }

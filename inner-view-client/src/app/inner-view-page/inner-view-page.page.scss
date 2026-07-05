@@ -57,6 +57,24 @@ app-panoramic-viewer {
   opacity: 0.85;
 }
 
+.edit-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(var(--ion-color-primary-rgb), 0.88);
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+
 .info-card {
   margin: 0;
   width: 100%;

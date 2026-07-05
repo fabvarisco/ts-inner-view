@@ -50,7 +50,9 @@ export class PanoramicViewerComponent implements AfterViewInit, OnChanges, OnDes
   @ViewChild('canvasContainer', { static: true }) canvasContainer!: ElementRef<HTMLDivElement>;
 
   @Input() panoramas: Panorama[] = [];
+  @Input() editMode = false;
   @Output() panoramaChange = new EventEmitter<Panorama>();
+  @Output() hotspotPlaced = new EventEmitter<{ positionX: number; positionY: number }>();
 
   loading = true;
 
@@ -81,6 +83,9 @@ export class PanoramicViewerComponent implements AfterViewInit, OnChanges, OnDes
       if (this.panoramas.length > 0) {
         this.loadInitialPanorama();
       }
+    }
+    if (changes['editMode'] && this.initialized) {
+      this.renderer.domElement.style.cursor = this.editMode ? 'crosshair' : 'grab';
     }
   }
 
@@ -229,15 +234,24 @@ export class PanoramicViewerComponent implements AfterViewInit, OnChanges, OnDes
   }
 
   private readonly onCanvasClick = (event: MouseEvent) => {
-    if (this.hotspotSprites.length === 0) return;
-
     const rect = this.renderer.domElement.getBoundingClientRect();
     this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
+    if (this.editMode) {
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+      const hits = this.raycaster.intersectObject(this.sphereMesh);
+      if (hits.length > 0 && hits[0].uv) {
+        // Sphere scale(-1,1,1) mirrors X vertices but not UVs. To place sprite at the clicked
+        // world position, posX = (0.5 - u) mod 1, derived from cos(posX·2π) = -cos(u·2π).
+        this.hotspotPlaced.emit({ positionX: (1.5 - hits[0].uv.x) % 1, positionY: hits[0].uv.y });
+      }
+      return;
+    }
+
+    if (this.hotspotSprites.length === 0) return;
     this.raycaster.setFromCamera(this.mouse, this.camera);
     const intersects = this.raycaster.intersectObjects(this.hotspotSprites);
-
     if (intersects.length > 0) {
       const sprite = intersects[0].object as THREE.Sprite;
       const targetId = this.hotspotTargetMap.get(sprite);

@@ -14,6 +14,9 @@
           }
         </ion-button>
         @if (tour) {
+          <ion-button (click)="toggleHotspotEdit()" [color]="editingHotspots ? 'primary' : 'medium'">
+            <ion-icon slot="icon-only" name="git-network-outline"></ion-icon>
+          </ion-button>
           <ion-button color="danger" (click)="onDeleteTour()">
             <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
           </ion-button>
@@ -38,8 +41,17 @@
   } @else if (tour && tour.panoramas.length > 0) {
     <app-panoramic-viewer
       [panoramas]="tour.panoramas"
-      (panoramaChange)="onPanoramaChange($event)">
+      [editMode]="editingHotspots"
+      (panoramaChange)="onPanoramaChange($event)"
+      (hotspotPlaced)="onHotspotPlaced($event)">
     </app-panoramic-viewer>
+
+    @if (editingHotspots) {
+      <div class="edit-banner">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        {{ 'INNER_VIEW.HOTSPOT_EDIT_HINT' | translate }}
+      </div>
+    }
 
     <div class="info-panel-wrapper">
       <ion-button

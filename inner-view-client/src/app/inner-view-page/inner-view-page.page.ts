@@ -7,7 +7,7 @@ import {
   AlertController, ToastController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { eyeOutline, eyeOffOutline, cloudUploadOutline, trashOutline } from 'ionicons/icons';
+import { eyeOutline, eyeOffOutline, cloudUploadOutline, trashOutline, gitNetworkOutline, informationCircleOutline } from 'ionicons/icons';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { Property } from '../models/property.model';
@@ -38,6 +38,7 @@ export class InnerViewPagePage implements OnInit {
   loading = true;
   loadError = false;
   uploading = false;
+  editingHotspots = false;
 
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -48,7 +49,7 @@ export class InnerViewPagePage implements OnInit {
   private translate = inject(TranslateService);
 
   constructor() {
-    addIcons({ eyeOutline, eyeOffOutline, cloudUploadOutline, trashOutline });
+    addIcons({ eyeOutline, eyeOffOutline, cloudUploadOutline, trashOutline, gitNetworkOutline, informationCircleOutline });
   }
 
   ngOnInit() {
@@ -99,6 +100,48 @@ export class InnerViewPagePage implements OnInit {
 
   onPanoramaChange(panorama: Panorama) {
     this.currentPanorama = panorama;
+  }
+
+  toggleHotspotEdit() {
+    this.editingHotspots = !this.editingHotspots;
+  }
+
+  async onHotspotPlaced(pos: { positionX: number; positionY: number }) {
+    if (!this.tour || !this.currentPanorama) return;
+
+    const options = this.tour.panoramas
+      .filter(p => p.id !== this.currentPanorama!.id)
+      .map(p => ({ type: 'radio' as const, label: p.roomName, value: p.id }));
+
+    if (options.length === 0) {
+      this.showToast('INNER_VIEW.HOTSPOT_NO_TARGET', 'danger');
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: this.translate.instant('INNER_VIEW.HOTSPOT_SELECT_TARGET'),
+      inputs: options,
+      buttons: [
+        { text: this.translate.instant('INNER_VIEW.DELETE_CANCEL'), role: 'cancel' },
+        { text: this.translate.instant('INNER_VIEW.CONFIRM'), role: 'confirm' },
+      ],
+    });
+    await alert.present();
+    const { role, data } = await alert.onDidDismiss();
+    if (role !== 'confirm' || !data?.values) return;
+
+    try {
+      await firstValueFrom(this.virtualTourService.createHotspot({
+        panoramaId: this.currentPanorama.id,
+        targetId: data.values,
+        positionX: pos.positionX,
+        positionY: pos.positionY,
+      }));
+      this.tour = await firstValueFrom(this.virtualTourService.findTour(this.tour.id));
+      this.showToast('INNER_VIEW.HOTSPOT_CREATED', 'success');
+    } catch {
+      this.showToast('INNER_VIEW.HOTSPOT_ERROR', 'danger');
+    }
   }
 
   get pageTitle(): string {

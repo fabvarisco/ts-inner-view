@@ -40,6 +40,20 @@ export class VirtualTourService {
     return this.http.delete<void>(`${environment.apiUrl}/panoramas/${id}`);
   }
 
+  createHotspot(dto: {
+    panoramaId: string;
+    targetId: string;
+    positionX: number;
+    positionY: number;
+    label?: string;
+  }): Observable<{ id: string; label?: string; positionX: number; positionY: number; originId: string; targetId: string }> {
+    return this.http.post<any>(`${environment.apiUrl}/hotspots`, dto);
+  }
+
+  deleteHotspot(id: string): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/hotspots/${id}`);
+  }
+
   recordView(tourId: string, durationSeconds?: number): Observable<unknown> {
     return this.http.post(`${environment.apiUrl}/virtual-tours/${tourId}/views`, {
       sessionId: this.getSessionId(),
