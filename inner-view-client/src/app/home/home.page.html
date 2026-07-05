@@ -5,11 +5,11 @@
       <ion-button (click)="openLanguagePopover($event)">
         <ion-icon name="globe-outline" slot="icon-only"></ion-icon>
       </ion-button>
-      <ion-button>
-        <ion-icon name="cloud-upload-outline" slot="icon-only"></ion-icon>
-      </ion-button>
       <ion-button [routerLink]="['/profile']">
         <ion-icon name="person-circle-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <ion-button (click)="signout()" color="medium">
+        <ion-icon name="log-out-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -45,5 +45,10 @@
 </ion-popover>
 
 <ion-content [fullscreen]="true">
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button routerLink="/upload">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
   <app-inner-view-list [items]="filteredItems"></app-inner-view-list>
 </ion-content>

@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
-import { InnerViewItem } from '../../models/inner-view.model';
+import { Property } from '../../models/property.model';
 import { InnerViewCardComponent } from '../inner-view-card/inner-view-card.component';
 
 @Component({
@@ -12,5 +12,5 @@ import { InnerViewCardComponent } from '../inner-view-card/inner-view-card.compo
   imports: [CommonModule, IonGrid, IonRow, IonCol, InnerViewCardComponent]
 })
 export class InnerViewListComponent {
-  @Input() items: InnerViewItem[] = [];
+  @Input() items: Property[] = [];
 }

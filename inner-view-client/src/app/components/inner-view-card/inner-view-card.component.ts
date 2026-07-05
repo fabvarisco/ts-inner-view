@@ -1,26 +1,22 @@
 import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
-import { NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import {
-  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg,
-  IonButton, IonIcon, IonSkeletonText
+  IonCard, IonCardHeader, IonCardTitle, IonCardContent,
+  IonButton, IonIcon, IonLabel
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { heartOutline, heart, starOutline, star, shareSocialOutline } from 'ionicons/icons';
-import { InnerViewItem } from '../../models/inner-view.model';
+import { heartOutline, heart, starOutline, star, shareSocialOutline, locationOutline } from 'ionicons/icons';
+import { Property } from '../../models/property.model';
 
 @Component({
   selector: 'app-inner-view-card',
   templateUrl: './inner-view-card.component.html',
   styleUrls: ['./inner-view-card.component.scss'],
   standalone: true,
-  imports: [NgIf, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg, IonButton, IonIcon, IonSkeletonText]
+  imports: [IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon, IonLabel]
 })
 export class InnerViewCardComponent {
-  @Input() item!: InnerViewItem;
-  @Input() index!: number;
-  @Input() likes = 0;
-  @Input() shares = 0;
+  @Input() item!: Property;
 
   @Output() likeChange = new EventEmitter<boolean>();
   @Output() favoriteChange = new EventEmitter<boolean>();
@@ -28,24 +24,22 @@ export class InnerViewCardComponent {
 
   liked = false;
   favorited = false;
-  imageLoaded = false;
 
   private router = inject(Router);
 
   constructor() {
-    addIcons({ heartOutline, heart, starOutline, star, shareSocialOutline });
+    addIcons({ heartOutline, heart, starOutline, star, shareSocialOutline, locationOutline });
   }
 
   onCardClick() {
-    this.router.navigate(['/inner-view-page', this.index], {
-      state: { item: this.item }
+    this.router.navigate(['/inner-view-page', this.item.id], {
+      state: { property: this.item }
     });
   }
 
   onLike(event: Event) {
     event.stopPropagation();
     this.liked = !this.liked;
-    this.likes += this.liked ? 1 : -1;
     this.likeChange.emit(this.liked);
   }
 
@@ -58,5 +52,16 @@ export class InnerViewCardComponent {
   onShare(event: Event) {
     event.stopPropagation();
     this.shareClick.emit();
+  }
+
+  get locationLabel(): string {
+    const a = this.item.address;
+    if (!a) return '';
+    return [a.district, a.city, a.state].filter(Boolean).join(' · ');
+  }
+
+  get priceLabel(): string {
+    if (!this.item.price) return '';
+    return `R$ ${this.item.price.toLocaleString('pt-BR')}`;
   }
 }

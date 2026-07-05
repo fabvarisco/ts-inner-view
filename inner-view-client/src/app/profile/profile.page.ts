@@ -2,20 +2,22 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonBackButton, IonButtons,
-  IonAvatar, IonImg, IonSegment, IonSegmentButton, IonLabel,
+  IonSegment, IonSegmentButton, IonLabel,
   IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-  IonButton, IonIcon, IonModal, IonActionSheet, IonItem, IonTextarea, IonToast, IonSearchbar
+  IonButton, IonIcon, IonModal, IonActionSheet, IonItem, IonTextarea, IonToast, IonSearchbar, IonBadge
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
-  heartOutline, shareSocialOutline, starOutline,
-  pencilOutline, trashOutline, closeOutline, copyOutline
+  shareSocialOutline, pencilOutline, trashOutline, closeOutline, copyOutline,
+  homeOutline, personOutline
 } from 'ionicons/icons';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { InnerViewCardComponent } from '../components/inner-view-card/inner-view-card.component';
+import { AlertController } from '@ionic/angular/standalone';
+import { firstValueFrom } from 'rxjs';
 import { UserService } from '../services/user.service';
-import { UserProfile, UserUpload, FavoriteItem } from '../models/user.model';
-import { InnerViewItem } from '../models/inner-view.model';
+import { PropertyService } from '../services/property.service';
+import { UserProfile } from '../models/user.model';
+import { Property } from '../models/property.model';
 
 @Component({
   selector: 'app-profile',
@@ -25,22 +27,21 @@ import { InnerViewItem } from '../models/inner-view.model';
   imports: [
     CommonModule,
     IonHeader, IonToolbar, IonTitle, IonContent, IonBackButton, IonButtons,
-    IonAvatar, IonImg, IonSegment, IonSegmentButton, IonLabel,
+    IonSegment, IonSegmentButton, IonLabel,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-    IonButton, IonIcon, IonModal, IonActionSheet, IonItem, IonTextarea, IonToast, IonSearchbar,
-    InnerViewCardComponent,
+    IonButton, IonIcon, IonModal, IonActionSheet, IonItem, IonTextarea, IonToast, IonSearchbar, IonBadge,
     TranslatePipe
   ]
 })
 export class ProfilePage implements OnInit {
   private userService = inject(UserService);
+  private propertyService = inject(PropertyService);
+  private alertController = inject(AlertController);
   private translate = inject(TranslateService);
 
   user: UserProfile | null = null;
-  uploads: UserUpload[] = [];
-  filteredUploads: UserUpload[] = [];
-  favorites: FavoriteItem[] = [];
-  filteredFavorites: FavoriteItem[] = [];
+  properties: Property[] = [];
+  filteredProperties: Property[] = [];
 
   activeSegment = 'uploads';
 
@@ -55,47 +56,42 @@ export class ProfilePage implements OnInit {
   toastMessage = '';
 
   constructor() {
-    addIcons({ heartOutline, shareSocialOutline, starOutline, pencilOutline, trashOutline, closeOutline, copyOutline });
+    addIcons({ shareSocialOutline, pencilOutline, trashOutline, closeOutline, copyOutline, homeOutline, personOutline });
   }
 
   ngOnInit() {
     this.userService.getUser().subscribe({ next: (u) => (this.user = u) });
-    this.userService.getUserUploads().subscribe({ next: (u) => { this.uploads = u; this.filteredUploads = u; } });
-    this.userService.getFavorites().subscribe({ next: (f) => { this.favorites = f; this.filteredFavorites = f; } });
+    this.propertyService.listProperties({ limit: 100 }).subscribe({
+      next: (res) => {
+        this.properties = res.data;
+        this.filteredProperties = res.data;
+      }
+    });
   }
 
   onSegmentChange(event: any) {
     this.activeSegment = event.detail.value;
   }
 
-  onSearchUploads(event: any) {
-    const query = event.detail.value?.toLowerCase().trim() ?? '';
-    this.filteredUploads = query
-      ? this.uploads.filter(u =>
-          u.name.toLowerCase().includes(query) ||
-          u.descriptions.toLowerCase().includes(query)
+  onSearchProperties(event: any) {
+    const query = (event.detail.value ?? '').toLowerCase().trim();
+    this.filteredProperties = query
+      ? this.properties.filter(p =>
+          p.title.toLowerCase().includes(query) ||
+          (p.description ?? '').toLowerCase().includes(query)
         )
-      : this.uploads;
+      : this.properties;
   }
 
-  onSearchFavorites(event: any) {
-    const query = event.detail.value?.toLowerCase().trim() ?? '';
-    this.filteredFavorites = query
-      ? this.favorites.filter(f =>
-          f.name.toLowerCase().includes(query) ||
-          f.descriptions.toLowerCase().includes(query)
-        )
-      : this.favorites;
-  }
-
-  openEmbedModal(upload: UserUpload) {
+  openEmbedModal(property: Property) {
     const origin = window.location.origin;
-    this.embedLink = `${origin}/embed/${upload.id}`;
-    this.embedCode = `<iframe src="${origin}/embed/${upload.id}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`;
+    const tourId = property.virtualTour?.id ?? '';
+    this.embedLink = `${origin}/embed/${tourId}`;
+    this.embedCode = `<iframe src="${origin}/embed/${tourId}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`;
     this.isEmbedModalOpen = true;
   }
 
-  openEditSheet(upload: UserUpload) {
+  openEditSheet(property: Property) {
     this.editSheetButtons = [
       {
         text: this.translate.instant('PROFILE.ACTION_SHEET.RENAME'),
@@ -108,9 +104,7 @@ export class ProfilePage implements OnInit {
         text: this.translate.instant('PROFILE.ACTION_SHEET.DELETE'),
         icon: 'trash-outline',
         role: 'destructive',
-        handler: () => {
-          this.showToast(this.translate.instant('PROFILE.TOAST.COMING_SOON'));
-        }
+        handler: () => this.confirmAndDeleteProperty(property),
       },
       {
         text: this.translate.instant('PROFILE.ACTION_SHEET.CANCEL'),
@@ -120,14 +114,38 @@ export class ProfilePage implements OnInit {
     this.isEditSheetOpen = true;
   }
 
+  private async confirmAndDeleteProperty(property: Property) {
+    const alert = await this.alertController.create({
+      header: this.translate.instant('PROFILE.DELETE_TOUR_CONFIRM_HEADER'),
+      message: this.translate.instant('PROFILE.DELETE_TOUR_CONFIRM_MSG'),
+      buttons: [
+        { text: this.translate.instant('PROFILE.ACTION_SHEET.CANCEL'), role: 'cancel' },
+        { text: this.translate.instant('PROFILE.DELETE_CONFIRM'), role: 'confirm', cssClass: 'alert-danger' },
+      ],
+    });
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    if (role !== 'confirm') return;
+
+    try {
+      await firstValueFrom(this.propertyService.deleteProperty(property.id));
+      this.properties = this.properties.filter(p => p.id !== property.id);
+      this.filteredProperties = this.filteredProperties.filter(p => p.id !== property.id);
+      this.showToast(this.translate.instant('PROFILE.DELETE_TOUR_SUCCESS'));
+    } catch {
+      this.showToast(this.translate.instant('PROFILE.DELETE_TOUR_ERROR'));
+    }
+  }
+
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
       this.showToast(this.translate.instant('PROFILE.TOAST.COPIED'));
     });
   }
 
-  asFavoriteInnerViewItem(fav: FavoriteItem): InnerViewItem {
-    return fav as InnerViewItem;
+  get roleLabel(): string {
+    if (!this.user) return '';
+    return this.user.type === 'ADMINISTRATOR' ? 'Administrador' : 'Corretor';
   }
 
   private showToast(message: string) {

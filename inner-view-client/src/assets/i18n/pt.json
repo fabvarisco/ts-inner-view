@@ -37,9 +37,58 @@
     "TOAST": {
       "COPIED": "Copiado!",
       "COMING_SOON": "Funcionalidade em breve"
+    },
+    "DELETE_TOUR_CONFIRM_HEADER": "Excluir imóvel",
+    "DELETE_TOUR_CONFIRM_MSG": "O imóvel e todos os seus dados serão removidos. Continuar?",
+    "DELETE_CONFIRM": "Excluir",
+    "DELETE_TOUR_SUCCESS": "Imóvel excluído.",
+    "DELETE_TOUR_ERROR": "Erro ao excluir o imóvel."
+  },
+  "UPLOAD": {
+    "TITLE": "Novo Tour Virtual",
+    "PROPERTY_SECTION": "Dados do imóvel",
+    "PROPERTY_TITLE_LABEL": "Nome do imóvel",
+    "PROPERTY_TYPE_LABEL": "Tipo de imóvel",
+    "PROPERTY_PURPOSE_LABEL": "Finalidade",
+    "IMAGES_TITLE": "Imagens 360°",
+    "ADD_IMAGE": "Adicionar imagem 360°",
+    "NO_IMAGES": "Nenhuma imagem adicionada ainda.",
+    "SUBMIT": "Criar tour",
+    "SUBMITTING": "Criando...",
+    "ERROR": "Erro ao criar o tour.",
+    "TYPE": {
+      "HOUSE": "Casa",
+      "APARTMENT": "Apartamento",
+      "LAND": "Terreno",
+      "COMMERCIAL": "Comercial",
+      "RURAL": "Rural",
+      "OFFICE": "Escritório"
+    },
+    "PURPOSE": {
+      "SALE": "Venda",
+      "RENT": "Aluguel",
+      "SALE_OR_RENT": "Venda ou Aluguel"
     }
   },
   "INNER_VIEW": {
-    "LOADING": "Carregando..."
+    "LOADING": "Carregando...",
+    "LOAD_ERROR": "Não foi possível carregar o tour virtual.",
+    "NO_TOUR": "Este imóvel ainda não possui imagens 360°.",
+    "UPLOAD_FIRST": "Enviar primeira imagem",
+    "ROOM_NAME_TITLE": "Nome do ambiente",
+    "ROOM_NAME_PLACEHOLDER": "Ex: Sala, Cozinha...",
+    "CANCEL": "Cancelar",
+    "CONFIRM": "Adicionar",
+    "UPLOAD_SUCCESS": "Imagem enviada com sucesso!",
+    "UPLOAD_ERROR": "Erro ao enviar a imagem.",
+    "DELETE_TOUR_CONFIRM_HEADER": "Excluir tour",
+    "DELETE_TOUR_CONFIRM_MSG": "Isso removerá todos os panoramas do tour. Continuar?",
+    "DELETE_PANORAMA_CONFIRM_HEADER": "Excluir panorama",
+    "DELETE_PANORAMA_CONFIRM_MSG": "Remover o panorama atual?",
+    "DELETE_CANCEL": "Cancelar",
+    "DELETE_CONFIRM": "Excluir",
+    "DELETE_TOUR_ERROR": "Erro ao excluir o tour.",
+    "DELETE_PANORAMA_SUCCESS": "Panorama excluído.",
+    "DELETE_PANORAMA_ERROR": "Erro ao excluir o panorama."
   }
 }

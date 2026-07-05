@@ -3,35 +3,82 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>{{ currentItem?.name || 'Inner View' }}</ion-title>
+    <ion-title>{{ pageTitle }}</ion-title>
+    <ion-buttons slot="end">
+      @if (property && !loading) {
+        <ion-button (click)="openFilePicker()" [disabled]="uploading">
+          @if (uploading) {
+            <ion-spinner name="crescent"></ion-spinner>
+          } @else {
+            <ion-icon slot="icon-only" name="cloud-upload-outline"></ion-icon>
+          }
+        </ion-button>
+        @if (tour) {
+          <ion-button color="danger" (click)="onDeleteTour()">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
+        }
+      }
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <app-panoramic-viewer
-    *ngIf="currentItem"
-    [imagePath]="getPanoramicPath()">
-  </app-panoramic-viewer>
+  <input type="file" accept="image/*" hidden #fileInput (change)="onFileSelected($event)">
 
-  <div *ngIf="!currentItem" class="loading-container">
-    <p>{{ 'INNER_VIEW.LOADING' | translate }}</p>
-  </div>
+  @if (loading) {
+    <div class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>{{ 'INNER_VIEW.LOADING' | translate }}</p>
+    </div>
+  } @else if (loadError) {
+    <div class="loading-container">
+      <p>{{ 'INNER_VIEW.LOAD_ERROR' | translate }}</p>
+    </div>
+  } @else if (tour && tour.panoramas.length > 0) {
+    <app-panoramic-viewer
+      [panoramas]="tour.panoramas"
+      (panoramaChange)="onPanoramaChange($event)">
+    </app-panoramic-viewer>
 
-  <div *ngIf="currentItem" class="info-panel-wrapper">
-    <ion-button
-      class="toggle-btn"
-      fill="solid"
-      size="small"
-      color="dark"
-      (click)="infoPanelVisible = !infoPanelVisible">
-      <ion-icon slot="icon-only" [name]="infoPanelVisible ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-    </ion-button>
+    <div class="info-panel-wrapper">
+      <ion-button
+        class="toggle-btn"
+        fill="solid"
+        size="small"
+        color="dark"
+        (click)="infoPanelVisible = !infoPanelVisible">
+        <ion-icon slot="icon-only" [name]="infoPanelVisible ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+      </ion-button>
 
-    <ion-card *ngIf="infoPanelVisible" class="info-card">
-      <ion-card-header>
-        <ion-card-title>{{ currentItem.name }}</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>{{ currentItem.descriptions }}</ion-card-content>
-    </ion-card>
-  </div>
+      @if (infoPanelVisible && property) {
+        <ion-card class="info-card">
+          <ion-card-header>
+            <ion-card-title>{{ property.title }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            @if (property.description) {
+              <p>{{ property.description }}</p>
+            }
+            @if (currentPanorama) {
+              <div class="room-row">
+                <p class="room-label">{{ currentPanorama.roomName }}</p>
+                <ion-button fill="clear" color="danger" size="small" (click)="onDeletePanorama()">
+                  <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                </ion-button>
+              </div>
+            }
+          </ion-card-content>
+        </ion-card>
+      }
+    </div>
+  } @else {
+    <div class="loading-container">
+      <p>{{ 'INNER_VIEW.NO_TOUR' | translate }}</p>
+      <ion-button (click)="openFilePicker()" [disabled]="uploading">
+        <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
+        {{ 'INNER_VIEW.UPLOAD_FIRST' | translate }}
+      </ion-button>
+    </div>
+  }
 </ion-content>

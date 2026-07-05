@@ -10,27 +10,28 @@
 <ion-content [fullscreen]="true">
 
   <div class="profile-header" *ngIf="user">
-    <ion-avatar class="profile-avatar">
-      <img [src]="user.avatar" [alt]="user.name" />
-    </ion-avatar>
+    <div class="profile-avatar-placeholder">
+      <ion-icon name="person-outline" size="large"></ion-icon>
+    </div>
     <h2 class="profile-name">{{ user.name }}</h2>
-    <p class="profile-sub">{{ user.username }} &middot; {{ user.location }}</p>
-    <p class="profile-bio">{{ user.bio }}</p>
+    <p class="profile-sub">{{ user.email }}</p>
     <div class="stats-row">
       <div class="stat">
-        <span class="stat-value">{{ user.uploadCount }}</span>
+        <span class="stat-value">{{ properties.length }}</span>
         <span class="stat-label">{{ 'PROFILE.STATS.UPLOADS' | translate }}</span>
       </div>
       <div class="stat-divider"></div>
       <div class="stat">
-        <span class="stat-value">{{ user.favoriteCount }}</span>
-        <span class="stat-label">{{ 'PROFILE.STATS.FAVORITES' | translate }}</span>
+        <span class="stat-value">{{ roleLabel }}</span>
+        <span class="stat-label">Perfil</span>
       </div>
-      <div class="stat-divider"></div>
-      <div class="stat">
-        <span class="stat-value">{{ user.followerCount }}</span>
-        <span class="stat-label">{{ 'PROFILE.STATS.FOLLOWERS' | translate }}</span>
-      </div>
+      @if (user.licenseNumber) {
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value stat-value--small">{{ user.licenseNumber }}</span>
+          <span class="stat-label">CRECI</span>
+        </div>
+      }
     </div>
   </div>
 
@@ -38,67 +39,47 @@
     <ion-segment-button value="uploads">
       <ion-label>{{ 'PROFILE.SEGMENT.UPLOADS' | translate }}</ion-label>
     </ion-segment-button>
-    <ion-segment-button value="favorites">
-      <ion-label>{{ 'PROFILE.SEGMENT.FAVORITES' | translate }}</ion-label>
-    </ion-segment-button>
   </ion-segment>
 
   <div *ngIf="activeSegment === 'uploads'">
     <ion-searchbar
       [placeholder]="'PROFILE.SEARCH.UPLOADS' | translate"
-      (ionInput)="onSearchUploads($event)"
+      (ionInput)="onSearchProperties($event)"
       animated="true">
     </ion-searchbar>
     <ion-grid>
       <ion-row>
-        <ion-col size="6" *ngFor="let upload of filteredUploads">
+        <ion-col size="6" *ngFor="let property of filteredProperties">
           <ion-card class="upload-card">
-            <ion-img [src]="upload.thumb" [alt]="upload.name" class="upload-thumb"></ion-img>
             <ion-card-header>
-              <ion-card-title class="upload-title">{{ upload.name }}</ion-card-title>
+              <ion-card-title class="upload-title">{{ property.title }}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              <div class="social-stats">
-                <span class="stat-item">
-                  <ion-icon name="heart-outline"></ion-icon> {{ upload.likes }}
-                </span>
-                <span class="stat-item">
-                  <ion-icon name="share-social-outline"></ion-icon> {{ upload.shares }}
-                </span>
-                <span class="stat-item">
-                  <ion-icon name="star-outline"></ion-icon> {{ upload.favorites }}
-                </span>
+              <div class="property-meta">
+                @if (property.price) {
+                  <span class="meta-item">R$ {{ property.price | number:'1.0-0':'pt-BR' }}</span>
+                }
+                @if (property.totalArea) {
+                  <span class="meta-item">{{ property.totalArea }}m²</span>
+                }
+                @if (property.virtualTour) {
+                  <ion-badge color="primary">360°</ion-badge>
+                }
               </div>
               <div class="upload-actions">
-                <ion-button fill="outline" size="small" (click)="openEmbedModal(upload)">
-                  <ion-icon name="copy-outline" slot="start"></ion-icon>
-                  {{ 'PROFILE.BUTTON.EMBED' | translate }}
-                </ion-button>
-                <ion-button fill="clear" size="small" (click)="openEditSheet(upload)">
+                @if (property.virtualTour?.id) {
+                  <ion-button fill="outline" size="small" (click)="openEmbedModal(property)">
+                    <ion-icon name="copy-outline" slot="start"></ion-icon>
+                    {{ 'PROFILE.BUTTON.EMBED' | translate }}
+                  </ion-button>
+                }
+                <ion-button fill="clear" size="small" (click)="openEditSheet(property)">
                   <ion-icon name="pencil-outline" slot="start"></ion-icon>
                   {{ 'PROFILE.BUTTON.EDIT' | translate }}
                 </ion-button>
               </div>
             </ion-card-content>
           </ion-card>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-  </div>
-
-  <div *ngIf="activeSegment === 'favorites'">
-    <ion-searchbar
-      [placeholder]="'PROFILE.SEARCH.FAVORITES' | translate"
-      (ionInput)="onSearchFavorites($event)"
-      animated="true">
-    </ion-searchbar>
-    <ion-grid>
-      <ion-row>
-        <ion-col size="6" *ngFor="let fav of filteredFavorites; let i = index">
-          <app-inner-view-card
-            [item]="asFavoriteInnerViewItem(fav)"
-            [index]="i">
-          </app-inner-view-card>
         </ion-col>
       </ion-row>
     </ion-grid>

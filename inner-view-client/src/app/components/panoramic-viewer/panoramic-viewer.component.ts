@@ -1,19 +1,21 @@
-import { Component, Input, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnChanges, SimpleChanges, ElementRef, ViewChild, AfterViewInit, Output, EventEmitter } from '@angular/core';
 import { IonSpinner } from '@ionic/angular/standalone';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { Panorama } from '../../models/virtual-tour.model';
 
 @Component({
   selector: 'app-panoramic-viewer',
   standalone: true,
   imports: [IonSpinner],
   template: `
-    <div #canvasContainer class="canvas-container"></div>
-    @if (loading) {
-      <div class="loading-overlay">
-        <ion-spinner name="crescent"></ion-spinner>
-      </div>
-    }
+    <div #canvasContainer class="canvas-container">
+      @if (loading) {
+        <div class="loading-overlay">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+      }
+    </div>
   `,
   styles: [`
     :host {
@@ -44,9 +46,11 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
     }
   `]
 })
-export class PanoramicViewerComponent implements AfterViewInit, OnDestroy {
+export class PanoramicViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('canvasContainer', { static: true }) canvasContainer!: ElementRef<HTMLDivElement>;
-  @Input() imagePath: string = '';
+
+  @Input() panoramas: Panorama[] = [];
+  @Output() panoramaChange = new EventEmitter<Panorama>();
 
   loading = true;
 
@@ -54,94 +58,205 @@ export class PanoramicViewerComponent implements AfterViewInit, OnDestroy {
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private controls!: OrbitControls;
+  private sphereMesh!: THREE.Mesh;
+  private hotspotSprites: THREE.Sprite[] = [];
+  private hotspotTargetMap = new Map<THREE.Sprite, string>();
+  private raycaster = new THREE.Raycaster();
+  private mouse = new THREE.Vector2();
   private animationFrameId: number | null = null;
+  private initialized = false;
 
   ngAfterViewInit() {
     setTimeout(() => {
       this.initThreeJS();
-      if (this.imagePath) {
-        this.loadPanorama();
+      this.initialized = true;
+      if (this.panoramas.length > 0) {
+        this.loadInitialPanorama();
       }
     }, 0);
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['panoramas'] && !changes['panoramas'].firstChange && this.initialized) {
+      if (this.panoramas.length > 0) {
+        this.loadInitialPanorama();
+      }
+    }
   }
 
   ngOnDestroy() {
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
     }
+    this.renderer?.domElement.removeEventListener('click', this.onCanvasClick);
+    window.removeEventListener('resize', this.onWindowResize);
+    this.clearHotspots();
     this.controls?.dispose();
     this.renderer?.dispose();
   }
 
+  navigateTo(targetId: string) {
+    const target = this.panoramas.find(p => p.id === targetId);
+    if (target) {
+      this.loadPanorama(target);
+    }
+  }
+
+  private loadInitialPanorama() {
+    const initial = this.panoramas.find(p => p.initialPanorama)
+      ?? this.panoramas.reduce((a, b) => a.order <= b.order ? a : b);
+    this.loadPanorama(initial);
+  }
+
+  private loadPanorama(panorama: Panorama) {
+    this.loading = true;
+    const dataUri = panorama.imageData.startsWith('data:')
+      ? panorama.imageData
+      : `data:image/jpeg;base64,${panorama.imageData}`;
+
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      dataUri,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        (this.sphereMesh.material as THREE.MeshBasicMaterial).map = texture;
+        (this.sphereMesh.material as THREE.MeshBasicMaterial).needsUpdate = true;
+        this.clearHotspots();
+        this.addHotspots(panorama);
+        this.loading = false;
+        this.panoramaChange.emit(panorama);
+      },
+      undefined,
+      () => { this.loading = false; }
+    );
+  }
+
   private initThreeJS() {
-    // Scene
+    const container = this.canvasContainer.nativeElement;
+
     this.scene = new THREE.Scene();
 
-    // Camera
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      this.canvasContainer.nativeElement.clientWidth / this.canvasContainer.nativeElement.clientHeight,
-      1,
-      1100
-    );
+    this.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 1, 1100);
     this.camera.position.set(0, 0, 0.1);
 
-    // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(
-      this.canvasContainer.nativeElement.clientWidth,
-      this.canvasContainer.nativeElement.clientHeight
-    );
-    this.canvasContainer.nativeElement.appendChild(this.renderer.domElement);
+    this.renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(this.renderer.domElement);
 
-    // Controls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableZoom = true;
     this.controls.enablePan = false;
     this.controls.rotateSpeed = 0.5;
 
-    // Handle window resize
-    window.addEventListener('resize', this.onWindowResize.bind(this));
+    const geometry = new THREE.SphereGeometry(500, 60, 40);
+    geometry.scale(-1, 1, 1);
+    this.sphereMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial());
+    this.scene.add(this.sphereMesh);
 
-    // Start animation loop
+    this.renderer.domElement.addEventListener('click', this.onCanvasClick);
+    window.addEventListener('resize', this.onWindowResize);
+
     this.animate();
   }
 
-  private loadPanorama() {
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      this.imagePath,
-      (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
+  private addHotspots(panorama: Panorama) {
+    for (const hotspot of panorama.originHotspots) {
+      // Convert UV coords (positionX, positionY) to 3D world position inside the inverted sphere.
+      // Uses Three.js SphereGeometry UV mapping: phi = positionX * 2π, theta = (1-positionY) * π
+      const phi = hotspot.positionX * 2 * Math.PI;
+      const theta = (1 - hotspot.positionY) * Math.PI;
+      const r = 490;
+      const x = r * Math.cos(phi) * Math.sin(theta);
+      const y = r * Math.cos(theta);
+      const z = r * Math.sin(phi) * Math.sin(theta);
 
-        const geometry = new THREE.SphereGeometry(500, 60, 40);
-        geometry.scale(-1, 1, 1);
-
-        const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ map: texture }));
-        this.scene.add(mesh);
-        this.loading = false;
-      },
-      undefined,
-      (error) => {
-        console.error('Error loading panoramic image:', error);
-        this.loading = false;
-      }
-    );
+      const sprite = this.createHotspotSprite(hotspot.label ?? '');
+      sprite.position.set(x, y, z);
+      this.scene.add(sprite);
+      this.hotspotSprites.push(sprite);
+      this.hotspotTargetMap.set(sprite, hotspot.targetId);
+    }
   }
+
+  private clearHotspots() {
+    for (const sprite of this.hotspotSprites) {
+      this.scene.remove(sprite);
+      (sprite.material as THREE.SpriteMaterial).map?.dispose();
+      sprite.material.dispose();
+    }
+    this.hotspotSprites = [];
+    this.hotspotTargetMap.clear();
+  }
+
+  private createHotspotSprite(label: string): THREE.Sprite {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 96;
+    const ctx = canvas.getContext('2d')!;
+
+    // Background pill
+    ctx.beginPath();
+    ctx.roundRect(4, 4, 248, 88, 44);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Arrow icon
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⟶', 48, 48);
+
+    // Label text
+    if (label) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 18px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const maxWidth = 180;
+      ctx.fillText(label, 80, 48, maxWidth);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
+    const sprite = new THREE.Sprite(material);
+    // Scale keeps canvas aspect ratio (256:96 ≈ 8:3), sized for visibility at r=490
+    sprite.scale.set(80, 30, 1);
+    return sprite;
+  }
+
+  private readonly onCanvasClick = (event: MouseEvent) => {
+    if (this.hotspotSprites.length === 0) return;
+
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const intersects = this.raycaster.intersectObjects(this.hotspotSprites);
+
+    if (intersects.length > 0) {
+      const sprite = intersects[0].object as THREE.Sprite;
+      const targetId = this.hotspotTargetMap.get(sprite);
+      if (targetId) {
+        this.navigateTo(targetId);
+      }
+    }
+  };
+
+  private readonly onWindowResize = () => {
+    const container = this.canvasContainer.nativeElement;
+    this.camera.aspect = container.clientWidth / container.clientHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(container.clientWidth, container.clientHeight);
+  };
 
   private animate() {
     this.animationFrameId = requestAnimationFrame(() => this.animate());
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
-  }
-
-  private onWindowResize() {
-    const width = this.canvasContainer.nativeElement.clientWidth;
-    const height = this.canvasContainer.nativeElement.clientHeight;
-
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
-
-    this.renderer.setSize(width, height);
   }
 }

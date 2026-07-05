@@ -1,16 +1,19 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
   IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton,
-  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon
+  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon, IonSpinner,
+  AlertController, ToastController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { eyeOutline, eyeOffOutline } from 'ionicons/icons';
-import { TranslatePipe } from '@ngx-translate/core';
-import { InnerViewItem } from '../models/inner-view.model';
-import { InnerViewService } from '../services/inner-view.service';
+import { eyeOutline, eyeOffOutline, cloudUploadOutline, trashOutline } from 'ionicons/icons';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
+import { Property } from '../models/property.model';
+import { VirtualTour, Panorama } from '../models/virtual-tour.model';
+import { PropertyService } from '../services/property.service';
+import { VirtualTourService } from '../services/virtual-tour.service';
 import { PanoramicViewerComponent } from '../components/panoramic-viewer/panoramic-viewer.component';
 
 @Component({
@@ -19,51 +22,218 @@ import { PanoramicViewerComponent } from '../components/panoramic-viewer/panoram
   styleUrls: ['./inner-view-page.page.scss'],
   standalone: true,
   imports: [
+    CommonModule,
     IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
-    CommonModule, FormsModule, PanoramicViewerComponent, TranslatePipe
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon, IonSpinner,
+    PanoramicViewerComponent, TranslatePipe
   ]
 })
 export class InnerViewPagePage implements OnInit {
-  currentItem: InnerViewItem | null = null;
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
+  property: Property | null = null;
+  tour: VirtualTour | null = null;
+  currentPanorama: Panorama | null = null;
   infoPanelVisible = true;
+  loading = true;
+  loadError = false;
+  uploading = false;
 
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private innerViewService = inject(InnerViewService);
+  private propertyService = inject(PropertyService);
+  private virtualTourService = inject(VirtualTourService);
+  private alertController = inject(AlertController);
+  private toastController = inject(ToastController);
+  private translate = inject(TranslateService);
 
   constructor() {
-    addIcons({ eyeOutline, eyeOffOutline });
+    addIcons({ eyeOutline, eyeOffOutline, cloudUploadOutline, trashOutline });
   }
 
   ngOnInit() {
-    // Try to get item from router state first
-    const navigation = this.router.getCurrentNavigation();
-    if (navigation?.extras.state?.['item']) {
-      this.currentItem = navigation.extras.state['item'] as InnerViewItem;
-    } else {
-      // Fallback: fetch from service using route param
-      const id = this.route.snapshot.paramMap.get('id');
-      if (id) {
-        this.innerViewService.getInnerViewList().subscribe({
-          next: (items) => {
-            const index = parseInt(id, 10);
-            if (index >= 0 && index < items.length) {
-              this.currentItem = items[index];
-            }
-          },
-          error: (error) => {
-            console.error('Error loading item:', error);
-          }
-        });
+    const nav = this.router.getCurrentNavigation();
+    const stateProperty = nav?.extras.state?.['property'] as Property | undefined;
+
+    const id = this.route.snapshot.paramMap.get('id')!;
+
+    if (stateProperty) {
+      this.property = stateProperty;
+      if (stateProperty.virtualTour?.id) {
+        this.loadTour(stateProperty.virtualTour.id);
+      } else {
+        this.loading = false;
       }
+    } else {
+      this.propertyService.findProperty(id).subscribe({
+        next: (property) => {
+          this.property = property;
+          if (property.virtualTour?.id) {
+            this.loadTour(property.virtualTour.id);
+          } else {
+            this.loading = false;
+          }
+        },
+        error: () => {
+          this.loading = false;
+          this.loadError = true;
+        }
+      });
     }
   }
 
-  getPanoramicPath(): string {
-    if (this.currentItem && this.currentItem.panoramicPoints.length > 0) {
-      return `/assets/panoramic/${this.currentItem.panoramicPoints[0]}`;
+  onPanoramaChange(panorama: Panorama) {
+    this.currentPanorama = panorama;
+  }
+
+  get pageTitle(): string {
+    return this.currentPanorama?.roomName ?? this.property?.title ?? 'Inner View';
+  }
+
+  openFilePicker() {
+    this.fileInput.nativeElement.click();
+  }
+
+  async onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || !this.property) return;
+
+    const roomName = await this.promptRoomName();
+    if (!roomName) return;
+
+    this.uploading = true;
+    try {
+      const imageData = await this.readFileAsDataUrl(file);
+
+      let tourId: string;
+      if (this.tour) {
+        await firstValueFrom(this.virtualTourService.addPanorama(this.tour.id, {
+          roomName,
+          imageData,
+          order: this.tour.panoramas.length,
+        }));
+        tourId = this.tour.id;
+      } else {
+        const created = await firstValueFrom(this.virtualTourService.createTour(this.property.id, [
+          { roomName, imageData, order: 0, initialPanorama: true },
+        ]));
+        tourId = created.id;
+        this.property.virtualTour = { id: created.id, status: created.status };
+      }
+
+      // Create endpoints omit imageData in the response, so re-fetch the full tour
+      this.tour = await firstValueFrom(this.virtualTourService.findTour(tourId));
+      this.showToast('INNER_VIEW.UPLOAD_SUCCESS', 'success');
+    } catch {
+      this.showToast('INNER_VIEW.UPLOAD_ERROR', 'danger');
+    } finally {
+      this.uploading = false;
     }
-    return '';
+  }
+
+  async onDeleteTour() {
+    if (!this.tour) return;
+    const confirmed = await this.confirm(
+      'INNER_VIEW.DELETE_TOUR_CONFIRM_HEADER',
+      'INNER_VIEW.DELETE_TOUR_CONFIRM_MSG',
+    );
+    if (!confirmed) return;
+
+    try {
+      await firstValueFrom(this.virtualTourService.deleteTour(this.tour.id));
+      this.router.navigate(['/home']);
+    } catch {
+      this.showToast('INNER_VIEW.DELETE_TOUR_ERROR', 'danger');
+    }
+  }
+
+  async onDeletePanorama() {
+    if (!this.tour || !this.currentPanorama) return;
+    const confirmed = await this.confirm(
+      'INNER_VIEW.DELETE_PANORAMA_CONFIRM_HEADER',
+      'INNER_VIEW.DELETE_PANORAMA_CONFIRM_MSG',
+    );
+    if (!confirmed) return;
+
+    try {
+      await firstValueFrom(this.virtualTourService.deletePanorama(this.currentPanorama.id));
+      const updated = await firstValueFrom(this.virtualTourService.findTour(this.tour.id));
+      this.tour = updated;
+      this.currentPanorama = null;
+      if (updated.panoramas.length === 0) {
+        this.tour = null;
+      }
+      this.showToast('INNER_VIEW.DELETE_PANORAMA_SUCCESS', 'success');
+    } catch {
+      this.showToast('INNER_VIEW.DELETE_PANORAMA_ERROR', 'danger');
+    }
+  }
+
+  private async confirm(headerKey: string, messageKey: string): Promise<boolean> {
+    const alert = await this.alertController.create({
+      header: this.translate.instant(headerKey),
+      message: this.translate.instant(messageKey),
+      buttons: [
+        { text: this.translate.instant('INNER_VIEW.DELETE_CANCEL'), role: 'cancel' },
+        { text: this.translate.instant('INNER_VIEW.DELETE_CONFIRM'), role: 'confirm', cssClass: 'alert-danger' },
+      ],
+    });
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    return role === 'confirm';
+  }
+
+  private async promptRoomName(): Promise<string | null> {
+    const alert = await this.alertController.create({
+      header: this.translate.instant('INNER_VIEW.ROOM_NAME_TITLE'),
+      inputs: [{
+        name: 'roomName',
+        type: 'text',
+        placeholder: this.translate.instant('INNER_VIEW.ROOM_NAME_PLACEHOLDER'),
+      }],
+      buttons: [
+        { text: this.translate.instant('INNER_VIEW.CANCEL'), role: 'cancel' },
+        { text: this.translate.instant('INNER_VIEW.CONFIRM'), role: 'confirm' },
+      ],
+    });
+    await alert.present();
+    const { role, data } = await alert.onDidDismiss();
+    const roomName = (data?.values?.roomName ?? '').trim();
+    return role === 'confirm' && roomName ? roomName : null;
+  }
+
+  private readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  private async showToast(messageKey: string, color: 'success' | 'danger') {
+    const toast = await this.toastController.create({
+      message: this.translate.instant(messageKey),
+      duration: 3000,
+      color,
+      position: 'bottom',
+    });
+    await toast.present();
+  }
+
+  private loadTour(tourId: string) {
+    this.virtualTourService.findTour(tourId).subscribe({
+      next: (tour) => {
+        this.tour = tour;
+        this.loading = false;
+        this.virtualTourService.recordView(tourId).subscribe();
+      },
+      error: () => {
+        this.loading = false;
+        this.loadError = true;
+      }
+    });
   }
 }

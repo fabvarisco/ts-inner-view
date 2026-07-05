@@ -1,5 +1,31 @@
 # Como rodar o server-api localmente
 
+## NixOS (sem Docker)
+
+O projeto inclui um `shell.nix` que provisiona PostgreSQL 16, Node 22, Yarn e as engines do Prisma (os binários oficiais não existem para NixOS — o shell usa as do nixpkgs via `PRISMA_*_ENGINE_BINARY`).
+
+```bash
+cd server-api
+nix-shell
+
+# Setup inicial (uma vez):
+db-start                      # inicializa o cluster PG local em .postgres/ e cria o banco
+yarn install                  # instala deps (o postinstall roda prisma generate)
+npx prisma migrate deploy     # aplica migrations
+yarn seed                     # popula dados de exemplo
+
+# Desenvolvimento:
+db-start && yarn start:dev
+
+# Outros comandos:
+db-stop     # para o PostgreSQL
+db-logs     # logs do PG
+```
+
+O restante deste README descreve o fluxo com Docker.
+
+---
+
 ## Pré-requisitos
 
 Antes de começar, certifique-se de ter instalado:
