@@ -80,6 +80,19 @@
                 </ion-button>
               </div>
             }
+            @if (editingHotspots && currentPanorama && currentPanorama.originHotspots.length > 0) {
+              <div class="hotspot-list">
+                <p class="hotspot-list-title">{{ 'INNER_VIEW.HOTSPOT_LIST_TITLE' | translate }}</p>
+                @for (hs of currentPanorama.originHotspots; track hs.id) {
+                  <div class="hotspot-row">
+                    <span class="hotspot-target">⟶ {{ hs.label || targetRoomName(hs.targetId) }}</span>
+                    <ion-button fill="clear" color="danger" size="small" (click)="onDeleteHotspot(hs.id)">
+                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                    </ion-button>
+                  </div>
+                }
+              </div>
+            }
           </ion-card-content>
         </ion-card>
       }

@@ -57,6 +57,32 @@ app-panoramic-viewer {
   opacity: 0.85;
 }
 
+.hotspot-list {
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 8px;
+}
+
+.hotspot-list-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0 0 4px;
+}
+
+.hotspot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.hotspot-target {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
 .edit-banner {
   position: absolute;
   top: 12px;

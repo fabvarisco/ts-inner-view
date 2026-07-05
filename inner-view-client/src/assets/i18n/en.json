@@ -96,6 +96,7 @@
     "HOTSPOT_NO_TARGET": "Add more images to create hotspots",
     "HOTSPOT_CREATED": "Hotspot created!",
     "HOTSPOT_ERROR": "Failed to create hotspot",
-    "HOTSPOT_EDIT_HINT": "Click the panorama to add a navigation point"
+    "HOTSPOT_EDIT_HINT": "Click the panorama to add a navigation point",
+    "HOTSPOT_LIST_TITLE": "Navigation points"
   }
 }

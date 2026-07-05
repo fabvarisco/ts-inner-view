@@ -30,6 +30,7 @@ import { PanoramicViewerComponent } from '../components/panoramic-viewer/panoram
 })
 export class InnerViewPagePage implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild(PanoramicViewerComponent) viewer!: PanoramicViewerComponent;
 
   property: Property | null = null;
   tour: VirtualTour | null = null;
@@ -104,6 +105,31 @@ export class InnerViewPagePage implements OnInit {
 
   toggleHotspotEdit() {
     this.editingHotspots = !this.editingHotspots;
+  }
+
+  targetRoomName(targetId: string): string {
+    return this.tour?.panoramas.find(p => p.id === targetId)?.roomName ?? '—';
+  }
+
+  async onDeleteHotspot(hotspotId: string) {
+    if (!this.currentPanorama || !this.tour) return;
+    try {
+      await firstValueFrom(this.virtualTourService.deleteHotspot(hotspotId));
+      // Update local state without re-fetching tour (avoids viewer jumping to initial panorama)
+      this.currentPanorama = {
+        ...this.currentPanorama,
+        originHotspots: this.currentPanorama.originHotspots.filter(h => h.id !== hotspotId),
+      };
+      this.tour = {
+        ...this.tour,
+        panoramas: this.tour.panoramas.map(p =>
+          p.id === this.currentPanorama!.id ? this.currentPanorama! : p
+        ),
+      };
+      this.viewer?.reloadHotspots(this.currentPanorama);
+    } catch {
+      this.showToast('INNER_VIEW.HOTSPOT_ERROR', 'danger');
+    }
   }
 
   async onHotspotPlaced(pos: { positionX: number; positionY: number }) {

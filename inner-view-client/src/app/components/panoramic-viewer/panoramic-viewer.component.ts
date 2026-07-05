@@ -107,6 +107,11 @@ export class PanoramicViewerComponent implements AfterViewInit, OnChanges, OnDes
     }
   }
 
+  reloadHotspots(panorama: Panorama) {
+    this.clearHotspots();
+    this.addHotspots(panorama);
+  }
+
   private loadInitialPanorama() {
     const initial = this.panoramas.find(p => p.initialPanorama)
       ?? this.panoramas.reduce((a, b) => a.order <= b.order ? a : b);
@@ -242,9 +247,10 @@ export class PanoramicViewerComponent implements AfterViewInit, OnChanges, OnDes
       this.raycaster.setFromCamera(this.mouse, this.camera);
       const hits = this.raycaster.intersectObject(this.sphereMesh);
       if (hits.length > 0 && hits[0].uv) {
-        // Sphere scale(-1,1,1) mirrors X vertices but not UVs. To place sprite at the clicked
-        // world position, posX = (0.5 - u) mod 1, derived from cos(posX·2π) = -cos(u·2π).
-        this.hotspotPlaced.emit({ positionX: (1.5 - hits[0].uv.x) % 1, positionY: hits[0].uv.y });
+        // Three.js SphereGeometry has -x in its formula; scale(-1,1,1) cancels it back to +x.
+        // addHotspots uses theta=(1-posY)*π while UV v maps to theta=v*π, so posY = 1-v.
+        // posX maps directly: posX = u.
+        this.hotspotPlaced.emit({ positionX: hits[0].uv.x, positionY: 1 - hits[0].uv.y });
       }
       return;
     }
