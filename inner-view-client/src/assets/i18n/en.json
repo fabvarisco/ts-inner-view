@@ -70,6 +70,20 @@
       "SALE": "Sale",
       "RENT": "Rent",
       "SALE_OR_RENT": "Sale or Rent"
+    },
+    "ADDRESS": {
+      "SECTION": "Address (optional)",
+      "CEP_LABEL": "ZIP code (CEP)",
+      "CEP_PLACEHOLDER": "00000-000",
+      "STREET_LABEL": "Street",
+      "NUMBER_LABEL": "Number",
+      "COMPLEMENT_LABEL": "Complement",
+      "DISTRICT_LABEL": "District",
+      "CITY_LABEL": "City",
+      "STATE_LABEL": "State (UF)",
+      "CEP_NOT_FOUND": "CEP not found.",
+      "CEP_LOOKUP_ERROR": "Failed to look up the CEP.",
+      "REQUIRED_HINT": "Fill in street, city and state (2 letters) or leave the address empty."
     }
   },
   "INNER_VIEW": {

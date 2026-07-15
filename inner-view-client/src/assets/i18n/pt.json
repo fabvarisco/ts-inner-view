@@ -70,6 +70,20 @@
       "SALE": "Venda",
       "RENT": "Aluguel",
       "SALE_OR_RENT": "Venda ou Aluguel"
+    },
+    "ADDRESS": {
+      "SECTION": "Endereço (opcional)",
+      "CEP_LABEL": "CEP",
+      "CEP_PLACEHOLDER": "00000-000",
+      "STREET_LABEL": "Rua",
+      "NUMBER_LABEL": "Número",
+      "COMPLEMENT_LABEL": "Complemento",
+      "DISTRICT_LABEL": "Bairro",
+      "CITY_LABEL": "Cidade",
+      "STATE_LABEL": "UF",
+      "CEP_NOT_FOUND": "CEP não encontrado.",
+      "CEP_LOOKUP_ERROR": "Erro ao consultar o CEP.",
+      "REQUIRED_HINT": "Preencha rua, cidade e UF (2 letras) ou deixe o endereço em branco."
     }
   },
   "INNER_VIEW": {

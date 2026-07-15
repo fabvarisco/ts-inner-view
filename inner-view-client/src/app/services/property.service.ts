@@ -10,6 +10,15 @@ export interface CreatePropertyPayload {
   type: string;
   purpose: string;
   description?: string;
+  address?: {
+    street: string;
+    number?: string;
+    complement?: string;
+    district?: string;
+    city: string;
+    state: string;
+    zipCode?: string;
+  };
 }
 
 @Injectable({ providedIn: 'root' })

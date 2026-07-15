@@ -50,6 +50,97 @@
 
   <ion-list inset="true">
     <ion-list-header>
+      <ion-label>{{ 'UPLOAD.ADDRESS.SECTION' | translate }}</ion-label>
+    </ion-list-header>
+
+    <ion-item>
+      <ion-input
+        [ngModel]="cep"
+        (ionInput)="onCepInput($event)"
+        (ionBlur)="onCepBlur()"
+        [label]="'UPLOAD.ADDRESS.CEP_LABEL' | translate"
+        labelPlacement="floating"
+        [placeholder]="'UPLOAD.ADDRESS.CEP_PLACEHOLDER' | translate"
+        type="text"
+        inputmode="numeric"
+        maxlength="9"
+        autocomplete="postal-code">
+      </ion-input>
+      @if (cepLoading) {
+        <ion-spinner slot="end" name="crescent"></ion-spinner>
+      }
+    </ion-item>
+
+    <ion-item>
+      <ion-input
+        [(ngModel)]="street"
+        [label]="'UPLOAD.ADDRESS.STREET_LABEL' | translate"
+        labelPlacement="floating"
+        type="text"
+        [disabled]="cepLoading">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-input
+        [(ngModel)]="number"
+        [label]="'UPLOAD.ADDRESS.NUMBER_LABEL' | translate"
+        labelPlacement="floating"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-input
+        [(ngModel)]="complement"
+        [label]="'UPLOAD.ADDRESS.COMPLEMENT_LABEL' | translate"
+        labelPlacement="floating"
+        type="text"
+        [disabled]="cepLoading">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-input
+        [(ngModel)]="district"
+        [label]="'UPLOAD.ADDRESS.DISTRICT_LABEL' | translate"
+        labelPlacement="floating"
+        type="text"
+        [disabled]="cepLoading">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-input
+        [(ngModel)]="city"
+        [label]="'UPLOAD.ADDRESS.CITY_LABEL' | translate"
+        labelPlacement="floating"
+        type="text"
+        [disabled]="cepLoading">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-input
+        [(ngModel)]="state"
+        [label]="'UPLOAD.ADDRESS.STATE_LABEL' | translate"
+        labelPlacement="floating"
+        type="text"
+        maxlength="2"
+        autocapitalize="characters"
+        [disabled]="cepLoading">
+      </ion-input>
+    </ion-item>
+
+    @if (addressIncomplete) {
+      <ion-item lines="none">
+        <ion-note color="medium">{{ 'UPLOAD.ADDRESS.REQUIRED_HINT' | translate }}</ion-note>
+      </ion-item>
+    }
+  </ion-list>
+
+  <ion-list inset="true">
+    <ion-list-header>
       <ion-label>{{ 'UPLOAD.IMAGES_TITLE' | translate }}</ion-label>
     </ion-list-header>
 

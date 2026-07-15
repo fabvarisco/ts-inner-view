@@ -8,6 +8,11 @@ const PUBLIC_URLS = ['/auth/signin', '/auth/signup'];
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
   const authService = inject(AuthService);
 
+  // Absolute URLs are external APIs (backend calls use the relative /api path) — never send the app's JWT
+  if (/^https?:\/\//.test(req.url)) {
+    return next(req);
+  }
+
   if (PUBLIC_URLS.some(url => req.url.includes(url))) {
     return next(req);
   }
