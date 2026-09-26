@@ -450,6 +450,46 @@
         color: var(--ash);
       }
 
+      .arch {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .arch-slide h2 {
+        margin-bottom: 16px;
+      }
+
+      .arch-link {
+        margin: 0;
+        text-align: center;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        line-height: 1;
+        letter-spacing: 0;
+        color: var(--violet);
+      }
+
+      .arch-api .tags {
+        margin-top: 14px;
+      }
+
+      .arch-row {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .arch-row .arch-link {
+        padding: 0 4px;
+      }
+
+      .arch-note {
+        margin: 12px 0 0;
+        max-width: none;
+      }
+
       @media (max-width: 900px) {
         .grid-3,
         .grid-2,
@@ -460,6 +500,14 @@
         .grid-scenarios .card:nth-child(-n + 3),
         .grid-scenarios .card:nth-child(n + 4) {
           grid-column: auto;
+        }
+
+        .arch-row {
+          grid-template-columns: 1fr;
+        }
+
+        .arch-row .arch-link {
+          padding: 4px 0;
         }
 
         .nav {
@@ -589,6 +637,59 @@
             Cada entidade do diagrama vira uma escrita verificada na criação do
             tour: um virtual tour por imóvel, um panorama por cômodo, hotspots
             entre cômodos e medidas do cômodo.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide arch-slide" id="arquitetura">
+        <div class="inner">
+          <p class="eyebrow">Arquitetura</p>
+          <h2>Cliente, API e banco</h2>
+          <div class="arch">
+            <article class="card">
+              <div class="step-no">inner-view-client</div>
+              <h3>Ionic / Angular</h3>
+              <p>
+                O cliente fala com a API pelo proxy
+                <code>/api</code>.
+              </p>
+            </article>
+            <p class="arch-link" aria-hidden="true">↓ /api</p>
+            <article class="card arch-api">
+              <div class="step-no">server-api · :3000</div>
+              <h3>NestJS</h3>
+              <p>
+                Swagger em <code>/docs</code>. A entrada autentica com JWT
+                (access de 15 min, refresh de 7 dias) e valida o corpo no
+                <code>ZodValidationPipe</code>. Cada módulo segue
+                controller → service.
+              </p>
+              <div class="tags">
+                <span class="tag">Auth</span>
+                <span class="tag">Users</span>
+                <span class="tag">Properties</span>
+                <span class="tag">Virtual Tours</span>
+                <span class="tag">Panoramas</span>
+                <span class="tag">Hotspots</span>
+              </div>
+            </article>
+            <p class="arch-link" aria-hidden="true">↓</p>
+            <div class="arch-row">
+              <article class="card">
+                <div class="step-no">ORM</div>
+                <h3>Prisma</h3>
+                <p>Traduz os casos de uso nas tabelas do domínio.</p>
+              </article>
+              <p class="arch-link" aria-hidden="true">grava</p>
+              <article class="card">
+                <div class="step-no">:5432</div>
+                <h3>PostgreSQL</h3>
+                <p>Persiste imóveis, tours, sessões e analytics.</p>
+              </article>
+            </div>
+          </div>
+          <p class="lede arch-note">
+            A suíte unitária substitui o Prisma por um dublê e não abre o banco.
           </p>
         </div>
       </section>
@@ -785,41 +886,6 @@ Time:        6.341 s</span></pre>
               </dl>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section class="slide" id="defeito">
-        <div class="inner">
-          <p class="eyebrow">O que o teste pegou</p>
-          <h2>UUID que o Zod recusou</h2>
-          <div class="grid grid-2">
-            <article class="card">
-              <div class="step-no">CEN-51 · CEN-12.2</div>
-              <h3>A primeira execução falhou</h3>
-              <p>
-                Os ids fixos das fixtures não eram UUID válidos na RFC: os
-                dígitos de versão e variante estavam fora da faixa. O Zod 4
-                recusava o corpo inteiro em
-                <code>propertyId</code>, e os cenários que esperavam recusa
-                passavam pelo motivo errado.
-              </p>
-            </article>
-            <article class="card">
-              <div class="step-no">Correção</div>
-              <h3>Mesma leitura, formato válido</h3>
-              <p>
-                Os identificadores passaram para versão
-                <code>4</code> e variante <code>8</code>.
-              </p>
-              <div class="term" style="margin-top: 14px">
-                <pre><span class="v">33333333-3333-4333-8333-333333333333</span></pre>
-              </div>
-            </article>
-          </div>
-          <p class="caption">
-            Cenários do catálogo ainda sem teste unitário: CEN-04, CEN-05,
-            CEN-08 a CEN-11, CEN-15, CEN-16 e CEN-20.
-          </p>
         </div>
       </section>
 
