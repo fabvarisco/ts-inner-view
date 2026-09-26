@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inner View — Testes de aceitação</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --obsidian: #000000;
+        --graphite: #121212;
+        --onyx: #1e1e1d;
+        --carbon: #333333;
+        --slate: #40403f;
+        --bone: #faf9f6;
+        --ash-light: #e3e2e0;
+        --ash-mid: #b4b4b2;
+        --ash: #868684;
+        --iron: #666469;
+        --ink: #080808;
+        --violet: #cbb0f7;
+        --max: 1200px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--obsidian);
+        color: var(--bone);
+        font-family: Inter, sans-serif;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+      }
+
+      button,
+      a {
+        font-family: inherit;
+      }
+
+      .topbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        background: var(--obsidian);
+      }
+
+      .mark {
+        font-size: 14px;
+        letter-spacing: -0.01em;
+        color: var(--bone);
+      }
+
+      .mark span {
+        color: var(--ash);
+      }
+
+      .counter {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 13px;
+        color: var(--ash);
+        letter-spacing: 0;
+      }
+
+      .deck {
+        height: 100%;
+      }
+
+      .slide {
+        display: none;
+        height: 100%;
+        padding: 88px 28px 96px;
+        overflow: auto;
+      }
+
+      .slide.is-active {
+        display: block;
+      }
+
+      .slide.slide-open.is-active {
+        display: grid;
+        align-content: center;
+      }
+
+      .inner {
+        max-width: var(--max);
+        margin: 0 auto;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        font-size: 10px;
+        line-height: 1.2;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ash-mid);
+      }
+
+      h1 {
+        margin: 0;
+        font-weight: 400;
+        font-size: clamp(36px, 5vw, 56px);
+        line-height: 0.96;
+        letter-spacing: -0.04em;
+        color: var(--bone);
+      }
+
+      h2 {
+        margin: 0 0 28px;
+        font-weight: 400;
+        font-size: clamp(28px, 3.4vw, 40px);
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        color: var(--bone);
+      }
+
+      .lede {
+        max-width: 640px;
+        margin: 20px 0 0;
+        font-size: 16px;
+        line-height: 1.33;
+        letter-spacing: -0.012em;
+        color: var(--ash-mid);
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 28px;
+      }
+
+      .tag {
+        border: 1px solid var(--carbon);
+        border-radius: 50px;
+        padding: 4px 12px;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ash-mid);
+      }
+
+      .grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .grid-scenarios {
+        grid-template-columns: repeat(6, 1fr);
+      }
+
+      .grid-scenarios .card:nth-child(-n + 3) {
+        grid-column: span 2;
+      }
+
+      .grid-scenarios .card:nth-child(n + 4) {
+        grid-column: span 3;
+      }
+
+      .card {
+        background: var(--onyx);
+        border: 1px solid var(--onyx);
+        border-radius: 20px;
+        padding: 20px 22px;
+      }
+
+      .card h3 {
+        margin: 8px 0 10px;
+        font-size: 18px;
+        font-weight: 400;
+        letter-spacing: -0.012em;
+        line-height: 1.2;
+        color: var(--bone);
+      }
+
+      .card p,
+      .steps p {
+        margin: 0;
+        color: var(--ash-mid);
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      .step-no {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--violet);
+        letter-spacing: 0;
+      }
+
+      code,
+      .mono {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 13px;
+        letter-spacing: 0;
+        color: var(--violet);
+      }
+
+      .quote {
+        margin: 0;
+        padding: 24px;
+        background: var(--graphite);
+        border: 1px solid var(--onyx);
+        border-radius: 20px;
+        font-size: 20px;
+        line-height: 1.3;
+        letter-spacing: -0.011em;
+        color: var(--bone);
+      }
+
+      .quote footer {
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--ash);
+      }
+
+      .diagram-frame {
+        margin-top: 18px;
+        background: var(--onyx);
+        border: 1px solid var(--onyx);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+
+      .diagram-frame img {
+        display: block;
+        width: 100%;
+        max-height: 420px;
+        object-fit: contain;
+        background: #f7f4ee;
+      }
+
+      .caption {
+        margin: 12px 0 0;
+        color: var(--ash);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .flow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-top: 14px;
+        color: var(--ash-mid);
+        font-size: 14px;
+      }
+
+      .flow b {
+        font-weight: 600;
+        color: var(--bone);
+      }
+
+      .term {
+        margin-top: 16px;
+        background: var(--obsidian);
+        border: 1px solid var(--onyx);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+
+      .term-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        padding: 0 14px;
+        background: var(--graphite);
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 4px;
+        background: var(--carbon);
+      }
+
+      .term-bar span {
+        margin-left: 8px;
+        font-size: 12px;
+        color: var(--ash);
+      }
+
+      pre {
+        margin: 0;
+        padding: 16px 18px 18px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--ash-mid);
+        overflow: auto;
+      }
+
+      pre .v {
+        color: var(--violet);
+      }
+
+      .gdt {
+        margin: 8px 0 0;
+        color: var(--ash-mid);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .gdt strong {
+        font-weight: 600;
+        color: var(--bone);
+      }
+
+      .suites {
+        display: grid;
+        grid-template-columns: 1.4fr 0.4fr;
+        gap: 0 16px;
+        margin: 0;
+      }
+
+      .suites dt,
+      .suites dd {
+        margin: 0;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--onyx);
+        font-size: 13px;
+      }
+
+      .suites dt {
+        color: var(--ash-mid);
+      }
+
+      .suites dd {
+        color: var(--bone);
+        text-align: right;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+      }
+
+      .note {
+        margin-top: 14px;
+        color: var(--ash);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        background: var(--obsidian);
+      }
+
+      .pager {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .pager button {
+        width: 7px;
+        height: 7px;
+        padding: 0;
+        border: 0;
+        border-radius: 4px;
+        background: var(--carbon);
+        cursor: pointer;
+      }
+
+      .pager button.is-on {
+        background: var(--bone);
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn {
+        border-radius: 33px;
+        padding: 9px 20px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .btn-fill {
+        background: var(--bone);
+        color: var(--ink);
+        border: 0;
+        font-weight: 600;
+      }
+
+      .btn-fill:hover {
+        background: var(--ash-light);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--ash-mid);
+        border: 1px solid var(--carbon);
+      }
+
+      .btn-ghost:hover {
+        border-color: var(--ash-mid);
+        color: var(--bone);
+      }
+
+      .btn:disabled {
+        color: var(--iron);
+        border-color: var(--onyx);
+        background: transparent;
+        cursor: default;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: var(--iron);
+      }
+
+      .kbd {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        color: var(--ash);
+      }
+
+      @media (max-width: 900px) {
+        .grid-3,
+        .grid-2,
+        .grid-scenarios {
+          grid-template-columns: 1fr;
+        }
+
+        .grid-scenarios .card:nth-child(-n + 3),
+        .grid-scenarios .card:nth-child(n + 4) {
+          grid-column: auto;
+        }
+
+        .nav {
+          padding: 0 16px;
+        }
+
+        .hint {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="mark">Inner View <span>/ testes</span></div>
+      <div class="counter" data-count>01 / 10</div>
+    </header>
+
+    <main class="deck">
+      <section class="slide slide-open is-active" id="capa">
+        <div class="inner">
+          <p class="eyebrow">server-api · NestJS · Jest</p>
+          <h1>Testes de aceitação do tour virtual</h1>
+          <p class="lede">
+            Roteiro TDD do módulo Virtual Tours. O requisito em foco é a
+            criação do tour: o corretor monta os cômodos e o cliente visita o
+            imóvel à distância.
+          </p>
+          <div class="tags">
+            <span class="tag">US01</span>
+            <span class="tag">Dado / Quando / Então</span>
+            <span class="tag">10 suítes</span>
+            <span class="tag">52 testes</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="roteiro">
+        <div class="inner">
+          <p class="eyebrow">Roteiro</p>
+          <h2>Como o teste foi escrito</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <div class="step-no">01 — vermelho</div>
+              <h3>O cenário nasce primeiro</h3>
+              <p>
+                O caso de aceitação vira um
+                <code>it('CEN-…')</code>. O service é chamado com um dublê de
+                Prisma. O teste falha porque a regra ainda não existe.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">02 — verde</div>
+              <h3>O mínimo que faz passar</h3>
+              <p>
+                O caso de uso grava só o que o cenário exige: o tour, os
+                panoramas, as medidas, os hotspots, ou a recusa. Nada além
+                disso.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">03 — refatorar</div>
+              <h3>A suíte continua verde</h3>
+              <p>
+                A transação única e o filtro por imobiliária mudam a
+                implementação. Os cenários de aceitação continuam descrevendo
+                o mesmo comportamento.
+              </p>
+            </article>
+          </div>
+          <div class="term">
+            <div class="term-bar">
+              <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+              <span>create-virtual-tour.service.spec.ts</span>
+            </div>
+            <pre><span class="v">it</span>('CEN-01: cria o tour virtual de um imóvel que ainda não possui tour', async () => {
+  <span class="v">// Dado</span> um imóvel cadastrado, sem tour, e o tour montado pelo corretor
+  <span class="v">// Quando</span> o corretor cria o tour virtual do imóvel
+  const resultado = await service.execute(dto, corretor);
+  <span class="v">// Então</span> o tour é criado já publicado e devolvido completo
+  expect(prisma.virtualTour.create).toHaveBeenCalledWith({
+    data: { propertyId, status: 'PUBLISHED' },
+  });
+});</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide slide-open" id="requisito">
+        <div class="inner">
+          <p class="eyebrow">Requisito escolhido · US01</p>
+          <h2>Criação do tour virtual</h2>
+          <blockquote class="quote">
+            Como corretor, quero criar o tour virtual de um imóvel e adicionar
+            os panoramas de cada cômodo, para que o cliente possa visitar o
+            imóvel a distância.
+            <footer>10 cenários em create-virtual-tour.service.spec.ts</footer>
+          </blockquote>
+          <p class="lede">
+            Pré-condição comum: o imóvel existe, pertence à imobiliária do
+            corretor e ainda não tem tour. Os testes instanciam
+            <code>CreateVirtualTourService</code> direto, sem subir a API nem
+            o banco.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide" id="diagrama">
+        <div class="inner">
+          <p class="eyebrow">Domínio</p>
+          <h2>O diagrama que os cenários percorrem</h2>
+          <div class="flow">
+            <b>Property</b> 1 — 0..1 <b>VirtualTour</b> 1 — 0..*
+            <b>Panorama</b>
+          </div>
+          <div class="flow">
+            Panorama 1 — 0..* <b>Hotspot</b> (origem) · hotspot direciona para
+            outro panorama · Panorama 1 — 0..* <b>Measurement</b>
+          </div>
+          <figure class="diagram-frame">
+            <img
+              src="Diagrama%20do%20TDD.png"
+              alt="Diagrama: Property possui VirtualTour, que contém Panorama. Panorama origina Hotspot, que direciona para outro panorama, e possui Measurement."
+            />
+          </figure>
+          <p class="caption">
+            Cada entidade do diagrama vira uma escrita verificada na criação do
+            tour: um virtual tour por imóvel, um panorama por cômodo, hotspots
+            entre cômodos e medidas do cômodo.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide" id="estrategia">
+        <div class="inner">
+          <p class="eyebrow">Estratégia</p>
+          <h2>Três camadas, sem banco</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <div class="step-no">Casos de uso</div>
+              <h3>Regra de negócio</h3>
+              <p>
+                O que é gravado, em que ordem, dentro de qual transação, e
+                quais operações são recusadas. O Prisma é um dublê.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">Handlers</div>
+              <h3>Contrato HTTP</h3>
+              <p>
+                O controller só repassa corpo, parâmetro de rota e usuário
+                autenticado. A resposta esperada volta do caso de uso.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">Borda</div>
+              <h3>Zod na entrada</h3>
+              <p>
+                Formato inválido é recusado com 400 antes de chegar no
+                service. Defaults do cômodo e da medida entram aqui.
+              </p>
+            </article>
+          </div>
+          <p class="lede">
+            Duas regras atravessam as escritas: o recurso é sempre buscado
+            pela imobiliária do usuário logado, e uma recusa não grava nada.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide" id="cenarios">
+        <div class="inner">
+          <p class="eyebrow">US01 · cinco cenários do fluxo feliz</p>
+          <h2>Do imóvel até a medida</h2>
+          <div class="grid grid-scenarios">
+            <article class="card">
+              <div class="step-no">CEN-01 · VirtualTour</div>
+              <h3>Cria o tour do imóvel</h3>
+              <p class="gdt">
+                <strong>Dado</strong> um imóvel sem tour.<br />
+                <strong>Quando</strong> o corretor cria o tour.<br />
+                <strong>Então</strong> o tour nasce
+                <code>PUBLISHED</code> e volta completo.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">CEN-03 · Panorama</div>
+              <h3>Um panorama por cômodo</h3>
+              <p class="gdt">
+                <strong>Dado</strong> Sala (inicial, ordem 0) e Cozinha (ordem 1).<br />
+                <strong>Quando</strong> o tour é criado.<br />
+                <strong>Então</strong> ordem e panorama inicial são preservados.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">CEN-06 · Hotspot</div>
+              <h3>tempId vira id real</h3>
+              <p class="gdt">
+                <strong>Dado</strong> a Sala aponta para a Cozinha e o inverso.<br />
+                <strong>Quando</strong> o tour é criado.<br />
+                <strong>Então</strong> origem e destino usam os ids gravados.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">CEN-12 · Measurement</div>
+              <h3>Medida no cômodo</h3>
+              <p class="gdt">
+                <strong>Dado</strong> a Sala com largura de 4,5 m.<br />
+                <strong>Quando</strong> o tour é criado.<br />
+                <strong>Então</strong> a medida fica ligada ao panorama da Sala.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">CEN-01.1 · transação</div>
+              <h3>Uma gravação só</h3>
+              <p class="gdt">
+                <strong>Dado</strong> o tour montado pelo corretor.<br />
+                <strong>Quando</strong> o tour é criado.<br />
+                <strong>Então</strong> panoramas, medidas e hotspots entram na mesma transação.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="recusas">
+        <div class="inner">
+          <p class="eyebrow">US01 · o que o teste recusa</p>
+          <h2>Falha não deixa rastro</h2>
+          <div class="grid grid-2">
+            <article class="card">
+              <div class="step-no">CEN-02 · 409 Conflict</div>
+              <h3>Segundo tour no mesmo imóvel</h3>
+              <p class="gdt">
+                <strong>Dado</strong> um imóvel que já tem tour.<br />
+                <strong>Quando</strong> o corretor tenta criar outro.<br />
+                <strong>Então</strong>
+                <code>Virtual tour already exists for this property</code>
+                e nada é criado.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">CEN-07 · 400 Bad Request</div>
+              <h3>Hotspot sem destino</h3>
+              <p class="gdt">
+                <strong>Dado</strong> a Sala aponta para um cômodo que não veio na lista.<br />
+                <strong>Quando</strong> o corretor cria o tour.<br />
+                <strong>Então</strong>
+                <code>targetTempId "temp-inexistente" not found</code>
+                e nenhum hotspot é gravado.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">CEN-21 · 404 Not Found</div>
+              <h3>Imóvel inexistente</h3>
+              <p class="gdt">
+                <strong>Dado</strong> um propertyId que não existe.<br />
+                <strong>Quando</strong> o corretor tenta criar o tour.<br />
+                <strong>Então</strong> a transação nem abre.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">CEN-22 · outra imobiliária</div>
+              <h3>Imóvel de outra carteira</h3>
+              <p class="gdt">
+                <strong>Dado</strong> um corretor de outra imobiliária.<br />
+                <strong>Quando</strong> ele tenta criar o tour.<br />
+                <strong>Então</strong> a busca filtra por
+                <code>agencyId</code> e a resposta é
+                <code>Property not found</code>.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="resultado">
+        <div class="inner">
+          <p class="eyebrow">Execução · 26/09/2026</p>
+          <h2>52 testes, 10 suítes</h2>
+          <div class="grid grid-2">
+            <div>
+              <div class="term">
+                <div class="term-bar">
+                  <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+                  <span>jest 27.5.1</span>
+                </div>
+                <pre>PASS create-virtual-tour.service.spec.ts
+PASS update-virtual-tour.service.spec.ts
+PASS get-analytics.service.spec.ts
+PASS record-view.service.spec.ts
+PASS record-share.service.spec.ts
+PASS delete-virtual-tour.service.spec.ts
+PASS find-virtual-tour.service.spec.ts
+PASS get-thumbnail.service.spec.ts
+PASS virtual-tour-dto.spec.ts
+PASS virtual-tours.controllers.spec.ts
+
+<span class="v">Test Suites: 10 passed, 10 total
+Tests:       52 passed, 52 total
+Time:        6.341 s</span></pre>
+              </div>
+              <p class="note">
+                A suíte unitária do módulo Virtual Tours. Criação do tour
+                (US01) sozinha cobre 10 dos 52 testes. O
+                <code>yarn test</code> do repositório chama o Jest 25, que não
+                carrega o ts-jest 27; esta saída é a mesma suíte no Jest 27.5.1.
+              </p>
+            </div>
+            <div class="card">
+              <div class="step-no">Inventário</div>
+              <dl class="suites">
+                <dt>create-virtual-tour</dt><dd>10</dd>
+                <dt>update-virtual-tour</dt><dd>4</dd>
+                <dt>find-virtual-tour</dt><dd>3</dd>
+                <dt>delete-virtual-tour</dt><dd>3</dd>
+                <dt>get-thumbnail</dt><dd>4</dd>
+                <dt>record-view</dt><dd>4</dd>
+                <dt>record-share</dt><dd>3</dd>
+                <dt>get-analytics</dt><dd>5</dd>
+                <dt>controllers</dt><dd>8</dd>
+                <dt>dto</dt><dd>8</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="defeito">
+        <div class="inner">
+          <p class="eyebrow">O que o teste pegou</p>
+          <h2>UUID que o Zod recusou</h2>
+          <div class="grid grid-2">
+            <article class="card">
+              <div class="step-no">CEN-51 · CEN-12.2</div>
+              <h3>A primeira execução falhou</h3>
+              <p>
+                Os ids fixos das fixtures não eram UUID válidos na RFC: os
+                dígitos de versão e variante estavam fora da faixa. O Zod 4
+                recusava o corpo inteiro em
+                <code>propertyId</code>, e os cenários que esperavam recusa
+                passavam pelo motivo errado.
+              </p>
+            </article>
+            <article class="card">
+              <div class="step-no">Correção</div>
+              <h3>Mesma leitura, formato válido</h3>
+              <p>
+                Os identificadores passaram para versão
+                <code>4</code> e variante <code>8</code>.
+              </p>
+              <div class="term" style="margin-top: 14px">
+                <pre><span class="v">33333333-3333-4333-8333-333333333333</span></pre>
+              </div>
+            </article>
+          </div>
+          <p class="caption">
+            Cenários do catálogo ainda sem teste unitário: CEN-04, CEN-05,
+            CEN-08 a CEN-11, CEN-15, CEN-16 e CEN-20.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide slide-open" id="executar">
+        <div class="inner">
+          <p class="eyebrow">Como repetir</p>
+          <h2>Rodar a suíte</h2>
+          <div class="term">
+            <div class="term-bar">
+              <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+              <span>server-api</span>
+            </div>
+            <pre><span class="v">cd</span> server-api
+<span class="v">nix-shell</span>
+
+<span class="v">yarn test</span>
+<span class="v">yarn test</span> --coverage
+<span class="v">yarn jest</span> src/modules/virtual-tours/services</pre>
+          </div>
+          <p class="lede">
+            Os testes não dependem do PostgreSQL. O dublê está em
+            <code>src/test/prisma-mock.ts</code> e os dados de apoio em
+            <code>src/test/virtual-tour.fixtures.ts</code>.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="nav">
+      <div class="hint">
+        <span class="kbd">←</span> <span class="kbd">→</span> para navegar
+      </div>
+      <div class="pager" data-pager></div>
+      <div class="actions">
+        <button class="btn btn-ghost" type="button" data-prev>Anterior</button>
+        <button class="btn btn-fill" type="button" data-next>Próximo</button>
+      </div>
+    </footer>
+
+    <script>
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const count = document.querySelector("[data-count]");
+      const pager = document.querySelector("[data-pager]");
+      const prev = document.querySelector("[data-prev]");
+      const next = document.querySelector("[data-next]");
+      let index = 0;
+
+      slides.forEach((_, i) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("aria-label", "Slide " + (i + 1));
+        button.addEventListener("click", () => show(i));
+        pager.appendChild(button);
+      });
+
+      function show(i) {
+        index = Math.max(0, Math.min(slides.length - 1, i));
+        slides.forEach((slide, n) => {
+          slide.classList.toggle("is-active", n === index);
+        });
+        pager.querySelectorAll("button").forEach((button, n) => {
+          button.classList.toggle("is-on", n === index);
+        });
+        count.textContent =
+          String(index + 1).padStart(2, "0") +
+          " / " +
+          String(slides.length).padStart(2, "0");
+        prev.disabled = index === 0;
+        next.disabled = index === slides.length - 1;
+        next.textContent = index === slides.length - 1 ? "Fim" : "Próximo";
+        if (location.hash !== "#" + slides[index].id) {
+          history.replaceState(null, "", "#" + slides[index].id);
+        }
+      }
+
+      prev.addEventListener("click", () => show(index - 1));
+      next.addEventListener("click", () => show(index + 1));
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowRight" || event.key === " " || event.key === "PageDown") {
+          event.preventDefault();
+          show(index + 1);
+        } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+          event.preventDefault();
+          show(index - 1);
+        } else if (event.key === "Home") {
+          show(0);
+        } else if (event.key === "End") {
+          show(slides.length - 1);
+        }
+      });
+
+      const start = slides.findIndex((slide) => "#" + slide.id === location.hash);
+      show(start === -1 ? 0 : start);
+    </script>
+  </body>
+</html>
