@@ -63,7 +63,7 @@ jobs:
       run:
         working-directory: inner-view-client
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -102,7 +102,7 @@ jobs:
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - id: meta
         run: echo "tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
@@ -169,7 +169,7 @@ jobs:
       run:
         working-directory: inner-view-client
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -234,7 +234,7 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - id: target
         env:
@@ -269,7 +269,7 @@ jobs:
       name: production
       url: ${{ vars.PRODUCTION_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Sem o domínio de produção não há como verificar o que foi promovido.
       # Falhar aqui é melhor do que promover e descobrir depois que o health

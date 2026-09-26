@@ -21,7 +21,7 @@ jobs:
     name: Secrets scanning (bloqueante)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Histórico completo: um segredo removido no último commit continua no histórico.
           fetch-depth: 0
@@ -39,7 +39,7 @@ jobs:
       matrix:
         app: [server-api, inner-view-client]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Bloqueante: apenas CRITICAL/HIGH que já possuem correção publicada.
       - name: Trivy · dependências (bloqueante)
@@ -80,7 +80,7 @@ jobs:
       matrix:
         app: [server-api, inner-view-client]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # SBOM em CycloneDX, anexado a toda execução: inventário do que foi liberado.
       - name: Gerar SBOM (CycloneDX)
