@@ -123,7 +123,12 @@ npx prisma migrate deploy
 yarn seed
 ```
 
-`db-start` inicializa um cluster em `server-api/.postgres` e cria o banco `property-360`.
+`db-start` inicializa um cluster em `server-api/.postgres` e cria o banco `property-360`. O `yarn seed` grava nele os dois usuários da aplicação, os mesmos do Docker:
+
+| Quem | E-mail | Senha |
+| --- | --- | --- |
+| Admin | `admin@relaxinn.com.br` | `admin123` |
+| Corretor | `corretor@relaxinn.com.br` | `corretor123` |
 
 Para desenvolver:
 
