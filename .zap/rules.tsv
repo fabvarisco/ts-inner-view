@@ -1,0 +1,14 @@
+# Regras do ZAP Baseline sobre o client publicado em homologação na Vercel.
+# WARN = alerta, não bloqueia. FAIL = bloqueia a promoção para produção.
+# Os cabeçalhos marcados como FAIL são os que inner-view-client/vercel.json
+# configura: o gate existe para detectar quando alguém os remover.
+# id	nível	descrição
+10015	WARN	(Cabeçalho Cache-Control ausente)
+10027	WARN	(Comentários informativos no código)
+10096	WARN	(Timestamp divulgado)
+10063	WARN	(Permissions-Policy ausente ou incompleta)
+90004	WARN	(Isolamento de site insuficiente contra Spectre)
+10035	FAIL	(HSTS ausente em endpoint HTTPS)
+10020	FAIL	(Anti-clickjacking ausente)
+10021	FAIL	(X-Content-Type-Options ausente)
+10038	FAIL	(Content-Security-Policy ausente)

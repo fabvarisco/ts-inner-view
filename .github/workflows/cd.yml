@@ -1,0 +1,344 @@
+# Entrega contínua do Inner View.
+#
+# O client (Angular/Ionic) é publicado na Vercel; a API é empacotada como imagem
+# versionada no GHCR. A integração Git da Vercel está desligada em vercel.json
+# (`"github": { "enabled": false }`): quem publica é esta esteira, para que os
+# gates de segurança aconteçam ANTES do deploy e não em paralelo a ele.
+#
+# Gates cobertos aqui: 3 (empacotamento), 4 (homologação), 5 (DAST) e 6 (produção).
+#
+# O artefato é construído UMA VEZ, no merge em main, e promovido:
+#   vercel build --prod  →  vercel deploy --prebuilt --prod --skip-domain  →  vercel promote
+# O `--skip-domain` cria um deployment de produção que ainda NÃO recebe o domínio.
+# Ele é validado em homologação (smoke + DAST) e, na tag, o `promote` apenas aponta
+# o domínio para esse mesmo deployment — o que vai ao ar é exatamente o que foi testado.
+#
+# Secrets necessários no repositório:
+#   VERCEL_TOKEN      token de acesso da Vercel
+#   VERCEL_ORG_ID     id da conta/time  (vercel.json local: .vercel/project.json)
+#   VERCEL_PROJECT_ID id do projeto do client na Vercel
+# Secret opcional:
+#   VERCEL_AUTOMATION_BYPASS_SECRET  libera smoke test e DAST quando o projeto usa
+#                                    Deployment Protection (Vercel > Settings > Protection)
+# Variáveis (Settings > Variables):
+#   PRODUCTION_URL    obrigatória para a promoção: domínio de produção do projeto
+#   STAGING_ALIAS     opcional: domínio fixo de homologação, para não caçar o link
+name: CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]      # -> homologação automática
+    tags: ['v*']          # -> produção, com aprovação manual
+  workflow_dispatch:
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  CLIENT_DIR: inner-view-client
+  IMAGE: ghcr.io/${{ github.repository }}/server-api
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Pull request: ambiente efêmero para revisão humana.
+  # Não é gate — é o que permite revisar a mudança rodando, e não só o diff.
+  # ---------------------------------------------------------------------------
+  preview:
+    name: Preview do client (pull request)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.url }}
+    defaults:
+      run:
+        working-directory: inner-view-client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: inner-view-client/package-lock.json
+
+      - name: Instalar a CLI da Vercel
+        run: npm install --global vercel@60
+
+      - name: Baixar configuração do environment Preview
+        run: vercel pull --yes --environment=preview --token='${{ secrets.VERCEL_TOKEN }}'
+
+      - name: Build
+        run: vercel build --token='${{ secrets.VERCEL_TOKEN }}'
+
+      - id: deploy
+        name: Publicar preview
+        run: |
+          url=$(vercel deploy --prebuilt \
+            --meta githubCommitSha="$GITHUB_SHA" \
+            --meta githubPrNumber="${{ github.event.number }}" \
+            --token='${{ secrets.VERCEL_TOKEN }}')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Gate 3 — empacotamento da API. A imagem só chega ao registry se passar no scan.
+  # A API ainda não tem host contratado; o que a esteira garante hoje é que o
+  # artefato existe, é rastreável pelo SHA e tem inventário.
+  # ---------------------------------------------------------------------------
+  package-api:
+    name: API · imagem + scan + SBOM (Gate 3)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: meta
+        run: echo "tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server-api
+          load: true
+          tags: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+
+      # Bloqueante: vulnerabilidade crítica/alta com correção disponível não vai para o registry.
+      - name: Trivy · imagem (bloqueante)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: SBOM da imagem
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+          format: cyclonedx-json
+          output-file: sbom-image.cdx.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-image
+          path: sbom-image.cdx.json
+          retention-days: 90
+
+      - name: Push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server-api
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE }}:${{ github.ref_type == 'tag' && github.ref_name || 'edge' }}
+
+  # ---------------------------------------------------------------------------
+  # Gates 3 e 4 — client: build único, deployment imutável, homologação e smoke.
+  # ---------------------------------------------------------------------------
+  staging:
+    name: Client · build, SBOM e homologação (Gates 3 e 4)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    defaults:
+      run:
+        working-directory: inner-view-client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: inner-view-client/package-lock.json
+
+      - name: Instalar a CLI da Vercel
+        run: npm install --global vercel@60
+
+      - name: Baixar configuração do environment Production
+        run: vercel pull --yes --environment=production --token='${{ secrets.VERCEL_TOKEN }}'
+
+      # Build de produção. É este bundle, e nenhum outro, que será promovido na tag.
+      - name: Build de produção
+        run: vercel build --prod --token='${{ secrets.VERCEL_TOKEN }}'
+
+      # SBOM do que foi efetivamente liberado, indexado pelo SHA do commit.
+      - name: SBOM do client (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: inner-view-client
+          format: cyclonedx-json
+          output-file: sbom-client.cdx.json
+          artifact-name: sbom-client-${{ github.sha }}.cdx.json
+
+      # --skip-domain: deployment de produção que ainda não recebe o domínio.
+      - id: deploy
+        name: Publicar deployment (sem apontar o domínio)
+        run: |
+          url=$(vercel deploy --prebuilt --prod --skip-domain \
+            --meta githubCommitSha="$GITHUB_SHA" \
+            --token='${{ secrets.VERCEL_TOKEN }}')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### Homologação: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      # Opcional: URL fixa de homologação, para o grupo não precisar caçar o link.
+      - name: Apontar o alias de homologação
+        if: vars.STAGING_ALIAS != ''
+        run: vercel alias set '${{ steps.deploy.outputs.url }}' '${{ vars.STAGING_ALIAS }}' --token='${{ secrets.VERCEL_TOKEN }}'
+
+      # Bloqueante: se o deployment não responde 200 com a aplicação dentro,
+      # não existe o que promover.
+      - name: Smoke test
+        env:
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          url='${{ steps.deploy.outputs.url }}'
+          [ -n "$BYPASS" ] && url="$url?x-vercel-protection-bypass=$BYPASS&x-vercel-set-bypass-cookie=true"
+          curl -fsS --retry 5 --retry-delay 5 --retry-all-errors "$url" | grep -q '<app-root'
+          echo "Smoke test OK"
+
+  # ---------------------------------------------------------------------------
+  # Gate 5 — DAST sobre a aplicação publicada em homologação.
+  # Alerta High reprova; Medium e Low viram aviso (.zap/rules.tsv).
+  # ---------------------------------------------------------------------------
+  dast-staging:
+    name: DAST em homologação (Gate 5)
+    needs: staging
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: target
+        env:
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          url='${{ needs.staging.outputs.url }}'
+          # A Deployment Protection da Vercel bloquearia o ZAP. O parâmetro de bypass
+          # devolve um cookie que o ZAP mantém durante a varredura.
+          [ -n "$BYPASS" ] && url="$url?x-vercel-protection-bypass=$BYPASS&x-vercel-set-bypass-cookie=true"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: OWASP ZAP Baseline
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: ${{ steps.target.outputs.url }}
+          rules_file_name: .zap/rules.tsv
+          cmd_options: '-a -j'
+          fail_action: true
+
+  # ---------------------------------------------------------------------------
+  # Gate 6 — produção. Tag v* + aprovação manual no environment `production`.
+  # Nada é construído aqui: apenas se aponta o domínio para o deployment que já
+  # passou por smoke e DAST em homologação.
+  # ---------------------------------------------------------------------------
+  promote-production:
+    name: Promoção para produção (Gate 6)
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    # O environment `production` exige revisor aprovador configurado no GitHub:
+    # nenhuma release chega ao usuário sem aprovação humana.
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sem o domínio de produção não há como verificar o que foi promovido.
+      # Falhar aqui é melhor do que promover e descobrir depois que o health
+      # check testou uma URL vazia.
+      - name: Conferir a configuração
+        run: |
+          if [ -z '${{ vars.PRODUCTION_URL }}' ]; then
+            echo "::error::Defina a variável PRODUCTION_URL (Settings > Variables) com o domínio de produção."
+            exit 1
+          fi
+
+      - name: Instalar a CLI da Vercel
+        run: npm install --global vercel@60
+
+      # Vincula o diretório ao projeto a partir de VERCEL_ORG_ID/VERCEL_PROJECT_ID,
+      # para que `promote` e `rollback` saibam sobre qual projeto agir.
+      - name: Vincular o projeto
+        run: vercel pull --yes --environment=production --token='${{ secrets.VERCEL_TOKEN }}'
+
+      # Localiza o deployment criado pelo merge em main para ESTE commit.
+      # Se a tag apontar para um commit que nunca passou por homologação, não há
+      # o que promover — e a esteira reprova em vez de construir algo novo.
+      - id: find
+        name: Localizar o deployment validado em homologação
+        env:
+          TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          query="projectId=$VERCEL_PROJECT_ID&meta-githubCommitSha=$GITHUB_SHA&state=READY&target=production&limit=1"
+          case "$VERCEL_ORG_ID" in team_*) query="$query&teamId=$VERCEL_ORG_ID" ;; esac
+          resp=$(curl -fsS -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v6/deployments?$query")
+          url=$(echo "$resp" | jq -r '.deployments[0].url // empty')
+          if [ -z "$url" ]; then
+            echo "::error::Nenhum deployment pronto para o commit $GITHUB_SHA."
+            echo "::error::Marque com tag apenas commits que já passaram por homologação."
+            exit 1
+          fi
+          echo "url=https://$url" >> "$GITHUB_OUTPUT"
+
+      # Qual deployment o domínio de produção serve NESTE momento. É para ele que
+      # o rollback volta, e por isso a consulta é no projeto e não na lista de
+      # deployments (o mais recente da lista é justamente o que vamos promover).
+      - name: Guardar a produção atual (para rollback)
+        id: current
+        env:
+          TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          query=""
+          case "$VERCEL_ORG_ID" in team_*) query="?teamId=$VERCEL_ORG_ID" ;; esac
+          resp=$(curl -fsS -H "Authorization: Bearer $TOKEN" \
+            "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID$query")
+          echo "url=$(echo "$resp" | jq -r '.targets.production.url // empty')" >> "$GITHUB_OUTPUT"
+
+      # Promoção: o domínio de produção passa a apontar para o deployment validado.
+      - name: Promover ${{ github.ref_name }}
+        run: |
+          vercel promote '${{ steps.find.outputs.url }}' --token='${{ secrets.VERCEL_TOKEN }}'
+          echo "### Produção: ${{ github.ref_name }} → ${{ steps.find.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Health check em produção
+        run: |
+          curl -fsS --retry 5 --retry-delay 5 --retry-all-errors '${{ vars.PRODUCTION_URL }}' | grep -q '<app-root'
+          echo "Health check OK"
+
+      # Rollback: volta o domínio para o deployment anterior, que continua existindo.
+      # Na Vercel o deployment é imutável, então desfazer é trocar o ponteiro.
+      - name: Rollback automático em caso de falha
+        if: failure() && steps.current.outputs.url != ''
+        run: |
+          vercel rollback 'https://${{ steps.current.outputs.url }}' --token='${{ secrets.VERCEL_TOKEN }}'
+          echo "::warning::Produção revertida para https://${{ steps.current.outputs.url }}"

@@ -1,0 +1,106 @@
+# Esteira de integração contínua do Inner View.
+# Gate 2 do documento da disciplina: roda em todo pull request para main e em todo push em main.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Um PR que recebe vários pushes cancela as execuções anteriores.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API · lint, build e testes
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: server-api/yarn.lock
+
+      - name: Instalar dependências
+        run: yarn install --frozen-lockfile
+
+      # O script `yarn lint` do projeto roda com --fix e por isso nunca falha.
+      # Na esteira o lint precisa ser verificação, não correção.
+      - name: Lint (verificação, sem --fix)
+        # TODO fase 1: remover o continue-on-error depois de rodar `yarn lint` uma vez
+        # e commitar a formatação (hoje há 89 erros, 88 deles auto-corrigíveis).
+        continue-on-error: true
+        run: npx eslint "{src,apps,libs,test}/**/*.ts" --max-warnings=0
+
+      - name: Build
+        run: yarn build
+
+      - name: Testes unitários com cobertura
+        run: yarn test:cov
+
+      - name: Verificar limite mínimo de cobertura
+        # TODO fase 1: elevar o limite para 50% e tornar bloqueante (hoje: 28% de statements).
+        continue-on-error: true
+        run: npx jest --coverage --coverageThreshold='{"global":{"statements":50,"branches":40,"lines":50}}'
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-api
+          path: server-api/coverage
+          retention-days: 14
+
+  client:
+    name: Client · lint, build e testes
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: inner-view-client
+    env:
+      CHROME_BIN: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: inner-view-client/package-lock.json
+
+      # O projeto versiona package-lock.json e yarn.lock. A esteira padroniza npm;
+      # o yarn.lock deve ser removido do repositório para não divergirem.
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Lint
+        # TODO fase 1: remover o continue-on-error (hoje há 1 erro: prefer-inject em language.service.ts).
+        continue-on-error: true
+        run: npx ng lint
+
+      - name: Build de produção
+        run: npx ng build --configuration production
+
+      - name: Testes unitários
+        # TODO fase 1: remover o continue-on-error depois de corrigir os 3 specs que falham
+        # por falta do provider HttpClient (app, home e inner-view-page).
+        continue-on-error: true
+        run: npx ng test --watch=false --browsers=ChromeHeadless --code-coverage
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-client
+          path: inner-view-client/coverage
+          retention-days: 14

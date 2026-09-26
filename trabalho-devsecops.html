@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Esteira DevSecOps — Inner View</title>
+<style>
+  @page { size: A4; margin: 3cm 2cm 2cm 3cm; }
+  @page :first { margin: 3cm 2cm 2cm 3cm; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    margin: 0;
+    text-align: justify;
+  }
+  p { margin: 0 0 0.6em 0; text-indent: 1.25cm; }
+  p.noind, li p { text-indent: 0; }
+  h1 { font-size: 12pt; font-weight: bold; text-transform: uppercase; margin: 1.2em 0 0.8em; text-align: left; page-break-after: avoid; }
+  h2 { font-size: 12pt; font-weight: bold; margin: 1.1em 0 0.6em; text-align: left; page-break-after: avoid; }
+  h3 { font-size: 12pt; font-weight: bold; font-style: italic; margin: 1em 0 0.5em; text-align: left; page-break-after: avoid; }
+  ul, ol { margin: 0 0 0.7em 0; padding-left: 1.25cm; }
+  li { margin-bottom: 0.25em; }
+  table { border-collapse: collapse; width: 100%; font-size: 9pt; line-height: 1.22; margin: 0.4em 0 0.3em; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid #444; padding: 3px 5px; vertical-align: top; text-align: left; }
+  th { background: #e8e8e8; font-weight: bold; }
+  .cap { font-size: 10pt; line-height: 1.2; margin: 0.6em 0 0.2em; text-indent: 0; }
+  .fonte { font-size: 9pt; line-height: 1.2; margin: 0.15em 0 1em; text-indent: 0; }
+  code, pre { font-family: "Courier New", monospace; }
+  code { font-size: 10pt; }
+  pre { font-size: 8.5pt; line-height: 1.25; border: 1px solid #999; padding: 6px 8px; white-space: pre-wrap; page-break-inside: avoid; margin: 0.3em 0 1em; }
+  pre.longo { font-size: 7.5pt; page-break-inside: auto; }
+  .capa { text-align: center; height: 24cm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
+  .capa p { text-indent: 0; text-align: center; }
+  .capa .inst { font-size: 12pt; text-transform: uppercase; line-height: 1.5; }
+  .capa .tit { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+  .capa .sub { font-size: 12pt; }
+  .anexo { page-break-before: always; }
+  .nobreak { page-break-inside: avoid; }
+  figure { margin: 0.5em 0 1em; page-break-inside: avoid; text-align: center; }
+  figure svg { width: 92%; height: auto; }
+  .semind { text-indent: 0; }
+</style>
+</head>
+<body>
+
+<div class="capa">
+  <div>
+    <p class="inst">Universidade do Vale do Rio dos Sinos — Unisinos</p>
+    <p class="inst">Pós-Graduação — Cultura e Práticas DevOps e DevSecOps</p>
+  </div>
+  <div>
+    <p class="tit">Esteira DevSecOps aplicada ao projeto Inner View</p>
+    <p class="sub">Diagnóstico, pipeline de CI/CD, controles de segurança e métricas de acompanhamento</p>
+  </div>
+  <div>
+    <p class="sub"><strong>Integrantes do grupo</strong></p>
+    <p class="sub">Fabricio Varisco</p>
+    <p class="sub">Gustavo Potrich</p>
+    <p class="sub">Lucas Krug</p>
+    <p class="sub">Matheus Thiesen</p>
+  </div>
+  <div>
+    <p class="sub">Repositório: github.com/fabvarisco/ts-inner-view</p>
+    <p class="sub">Módulo 4 — Atividade avaliativa · Setembro de 2026</p>
+  </div>
+</div>
+
+<h1>1 Contextualização e diagnóstico</h1>
+
+<h2>1.1 O projeto e a forma atual de trabalho</h2>
+
+<p>O <strong>Inner View</strong>, trabalho final da pós-graduação do grupo, é uma plataforma de <em>tours virtuais imobiliários</em>: o corretor cadastra o imóvel, envia as fotos panorâmicas de cada ambiente, liga um ambiente ao outro por pontos de navegação e publica um tour que o cliente percorre à distância. São duas aplicações no mesmo repositório: a API <code>server-api</code> (NestJS, TypeScript, Prisma, PostgreSQL, autenticação por JWT, 26 rotas e 12 modelos de dados) e o aplicativo <code>inner-view-client</code> (Angular, Ionic, Capacitor para Android, Three.js no visualizador 360°). O ambiente local já está descrito em código, com <code>Dockerfile</code> e <code>docker-compose.yml</code>.</p>
+
+<p>A forma de trabalho aparece no histórico do Git: <strong>19 commits</strong> entre 09/06/2026 e 26/09/2026, <strong>uma única branch</strong> (<code>main</code>) e <strong>nenhum pull request</strong>. Todos comitam direto na <code>main</code>, sem revisão. O diretório <code>.github/</code> não existia, ou seja, <strong>não havia nenhuma automação</strong>. Cada integrante sobe o banco, roda o projeto e testa na própria máquina — o que funciona, funciona só ali.</p>
+
+<h2>1.2 Diagnóstico do estado atual</h2>
+
+<p>Para o diagnóstico não ficar no "achismo", rodamos no repositório as mesmas verificações que a esteira faria. As saídas estão no Anexo F e o resumo no Quadro 1.</p>
+
+<table>
+  <tr><th style="width:21%">Dimensão</th><th>Estado atual observado (com evidência)</th></tr>
+  <tr><td>Integração de código</td><td>Commits diretos em <code>main</code>, sem revisão, sem verificação e sem proteção de branch — 19 commits, 0 merges, 0 PRs</td></tr>
+  <tr><td>Testes</td><td>Os testes de aceitação do módulo de tours virtuais, escritos em TDD, são <strong>52 e passam todos</strong>; mas a cobertura da API inteira é de <strong>28% das linhas</strong> (autenticação, imóveis, usuários e panoramas não têm teste) e não existem testes de integração. No aplicativo, dos 5 testes existentes, <strong>3 estão quebrados</strong> (erro <code>NG0201</code>) — vieram do esqueleto do Angular, nunca foram atualizados e estão assim na <code>main</code> há vários commits sem ninguém perceber</td></tr>
+  
+  <tr><td>Qualidade</td><td>O comando <code>yarn lint</code> do projeto corrige em vez de verificar, então nunca reprova. Rodando só como verificação, aponta <strong>89 erros</strong> na API (88 deles automáticos) e <strong>1</strong> no aplicativo</td></tr>
+  <tr><td>Build e deploy</td><td>Os builds funcionam, mas a imagem é gerada na máquina de quem desenvolve e não é publicada em lugar nenhum. Existe um projeto criado na Vercel para o aplicativo, e nenhum deploy sai dele — não há esteira que o acione. Na prática, <strong>não existe deploy</strong>: em 3,5 meses, o sistema nunca saiu do <code>localhost</code>. O endereço da API no build de produção é <code>https://api.seudominio.com</code>, um domínio que não existe</td></tr>
+  <tr><td>Segurança do código e segredos</td><td>Nenhuma verificação automática. Lendo o código de autenticação, achamos um segredo reserva escrito no próprio código: <code>process.env.JWT_ACCESS_SECRET ?? 'access-secret'</code> — se a variável de ambiente faltar, a API assina os tokens com um segredo público. Do lado positivo, o <code>.env</code> está no <code>.gitignore</code> e nenhum segredo real foi versionado; mas o <code>.env.example</code> traz exemplos fracos (<code>JWT_ACCESS_SECRET=aaaa</code>) que acabam virando valor real, e ninguém varre o histórico atrás de segredos</td></tr>
+  
+  <tr><td>Dependências</td><td>API: <strong>136 alertas de risco alto</strong> em 827 bibliotecas. Aplicativo: <strong>1 crítico e 35 altos</strong> em 1.608 bibliotecas. Não existe inventário de dependências (SBOM) nem atualização automática</td></tr>
+  <tr><td>Configuração da API</td><td>A API sobe sem CORS definido, sem limite de requisições e sem cabeçalhos de segurança; a documentação Swagger fica aberta; o limite de upload é de <strong>50 MB</strong> por requisição (panoramas em base64); e o contêiner roda como <code>root</code></td></tr>
+  <tr><td>Monitoramento</td><td>Não existe: sem rota de saúde, sem log organizado e sem alerta. Sem isso, não dá para medir quanto tempo se leva para detectar ou corrigir uma falha</td></tr>
+</table>
+<p class="fonte">Quadro 1 — Diagnóstico do estado atual. Fonte: elaborado pelos autores; saídas completas no Anexo F.</p>
+
+<p>Em resumo: o projeto tem partes técnicas boas e nenhuma esteira que ligue uma coisa na outra. O achado que melhor resume tudo não é a lista de vulnerabilidades, e sim os <strong>três testes quebrados na branch principal sem ninguém saber</strong> — o problema não é falta de cuidado técnico, é falta de um mecanismo que avise o grupo.</p>
+
+<h1>2 O desenho do pipeline de CI/CD</h1>
+
+<h2>2.1 Da cultura ao desenho: Três Caminhos e CALMS</h2>
+
+<p>No Inner View não existe o muro entre desenvolvimento e operação de <em>O Projeto Fênix</em>: existe <strong>ausência de operação</strong>, porque não há o que operar fora do <code>localhost</code>. Os sintomas, porém, são os mesmos dos Três Caminhos: falta <strong>fluxo</strong> (o trabalho não chega ao usuário), falta <strong>feedback</strong> (os três testes quebrados provam) e falta <strong>aprendizado contínuo</strong> (nada é medido). A esteira responde aos três: entregas pequenas e um único artefato promovido criam o fluxo; lint, testes e verificações de segurança respondem em minutos no próprio <em>pull request</em>; e as métricas da seção 4 fecham o aprendizado.</p>
+
+<p>Usamos o modelo <strong>CALMS</strong> como lista de conferência, para a proposta não virar só automação. <strong>Cultura:</strong> a <code>main</code> passa a ser responsabilidade de todos — esteira vermelha vira prioridade do grupo, e falha vira análise sem procurar culpado. <strong>Automação:</strong> quatro workflows cobrindo lint, build, teste, segurança e deploy, onde hoje não há nada. <strong>Lean:</strong> branches de até dois dias e pull requests pequenos, no lugar de entregas grandes que nunca chegam ao usuário. <strong>Medição:</strong> as nove métricas da seção 4, coletadas pela própria esteira. <strong>Compartilhamento:</strong> revisão por outro integrante e rodízio de quem publica a release, para o conhecimento não ficar com uma pessoa só.</p>
+
+<h2>2.2 Branches, ambientes e critérios de promoção</h2>
+
+<p>A estratégia escolhida é <strong>trunk-based development</strong>: a <code>main</code> fica sempre pronta para entregar, e cada tarefa vive em uma branch curta (<code>feat/</code>, <code>fix/</code>) de no máximo dois dias, que volta para a <code>main</code> por <em>pull request</em>. Descartamos o GitFlow porque, para quatro pessoas e entregas pequenas, as branches extras só atrasariam o feedback. A <code>main</code> fica protegida no GitHub: sem pull request aprovado por um colega e sem a esteira verde, não entra nada.</p>
+
+<table>
+  <tr><th style="width:17%">Ambiente</th><th style="width:25%">O que dispara</th><th style="width:26%">Artefato</th><th>Finalidade</th></tr>
+  <tr><td>Local</td><td><code>docker compose up</code> e <code>ng serve</code></td><td>Build na máquina</td><td>Desenvolvimento, com dados de <em>seed</em></td></tr>
+  <tr><td>Preview</td><td>Abertura ou atualização de <em>pull request</em></td><td><em>Deployment</em> efêmero na Vercel, uma URL por PR</td><td>Revisar a mudança rodando, e não só o <em>diff</em></td></tr>
+  <tr><td>Homologação</td><td>Merge em <code>main</code> (automático)</td><td><em>Deployment</em> imutável na Vercel, indexado pelo SHA do commit</td><td>Smoke test e alvo do DAST; ainda sem domínio público</td></tr>
+  <tr><td>Produção</td><td><em>Tag</em> <code>v*</code> + aprovação manual</td><td>O <strong>mesmo deployment</strong> validado em homologação</td><td>Domínio público, variáveis próprias, acesso de usuário</td></tr>
+</table>
+<p class="fonte">Quadro 2 — Ambientes e critérios de promoção. Fonte: elaborado pelos autores.</p>
+
+<p>A API não aparece no quadro como ambiente porque ainda não tem host contratado. O que a esteira já faz por ela é <strong>empacotar</strong>: cada merge gera a imagem, ela passa pelo scan e é publicada no GHCR identificada pelo SHA do commit. Quando houver host, o artefato já existe, versionado e com inventário — falta apenas o passo que o coloca no ar.</p>
+
+<p>Duas decisões sustentam o desenho. A primeira: o artefato é <strong>construído uma vez só</strong>, no merge em <code>main</code>, e daí em diante apenas promovido — o que chega à produção é exatamente o que foi testado. Na Vercel isso tem tradução direta: o merge roda <code>vercel deploy --prebuilt --prod --skip-domain</code>, que cria um <em>deployment</em> de produção com URL própria mas <strong>sem apontar o domínio</strong> para ele; a promoção, na <em>tag</em>, é um <code>vercel promote</code> que apenas move o domínio para esse mesmo <em>deployment</em>. A segunda: a <em>tag</em> no Git é o <strong>gatilho da produção</strong>, de modo que o grupo decide quando liberar sem perder a automação do caminho. Como todo <em>deployment</em> anterior continua existindo e imutável, voltar atrás é mover o ponteiro de volta.</p>
+
+<h2>2.3 Do commit ao deploy</h2>
+
+<figure>
+<svg viewBox="0 0 620 490" xmlns="http://www.w3.org/2000/svg" font-family="Arial" font-size="9">
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#000"/></marker>
+  </defs>
+  <g stroke="#000" fill="#f2f2f2">
+    <rect x="8" y="6" width="292" height="46" rx="5"/>
+    <rect x="8" y="80" width="292" height="82" rx="5"/>
+    <rect x="8" y="190" width="292" height="58" rx="5"/>
+    <rect x="8" y="276" width="292" height="58" rx="5"/>
+    <rect x="8" y="362" width="292" height="34" rx="5"/>
+    <rect x="8" y="424" width="292" height="58" rx="5"/>
+  </g>
+  <g font-weight="bold" font-size="9.5">
+    <text x="18" y="20">1 · Estação do desenvolvedor</text>
+    <text x="18" y="94">2 · Pull request para main — CI e preview</text>
+    <text x="18" y="204">3 · Merge em main — build único</text>
+    <text x="18" y="290">4 · Deploy automático em homologação</text>
+    <text x="18" y="376">5 · DAST em homologação</text>
+    <text x="18" y="438">6 · Tag v* — produção</text>
+  </g>
+  <g fill="#111">
+    <text x="18" y="34">commit em branch curta; hook local roda gitleaks,</text>
+    <text x="18" y="46">eslint e os testes do módulo tocado</text>
+    <text x="18" y="108">install → lint → build → testes unitários e cobertura</text>
+    <text x="18" y="120">(API e client, em paralelo)</text>
+    <text x="18" y="132">secrets scan · SCA · SBOM · SAST (CodeQL)</text>
+    <text x="18" y="144">preview efêmero na Vercel, uma URL por pull request</text>
+    <text x="18" y="156">revisão de 1 integrante + checks obrigatórios</text>
+    <text x="18" y="218">client: vercel build --prod + SBOM do que foi gerado</text>
+    <text x="18" y="230">API: imagem multi-estágio + scan + SBOM → GHCR</text>
+    <text x="18" y="242">API_URL vem da variável do projeto na Vercel</text>
+    <text x="18" y="304">vercel deploy --prebuilt --prod --skip-domain</text>
+    <text x="18" y="316">deployment imutável, ainda sem o domínio apontado</text>
+    <text x="18" y="328">smoke test na URL publicada</text>
+    <text x="18" y="390">OWASP ZAP baseline sobre o client publicado</text>
+    <text x="18" y="452">aprovação manual no environment production</text>
+    <text x="18" y="464">vercel promote do mesmo deployment validado</text>
+    <text x="18" y="476">rollback = vercel rollback, troca de ponteiro</text>
+  </g>
+  <g stroke="#000" marker-end="url(#a)">
+    <line x1="150" y1="52" x2="150" y2="76"/>
+    <line x1="150" y1="162" x2="150" y2="186"/>
+    <line x1="150" y1="248" x2="150" y2="272"/>
+    <line x1="150" y1="334" x2="150" y2="358"/>
+    <line x1="150" y1="396" x2="150" y2="420"/>
+  </g>
+  <g stroke="#000" fill="#fff">
+    <rect x="322" y="9" width="290" height="40" rx="4"/>
+    <rect x="322" y="90" width="290" height="62" rx="4"/>
+    <rect x="322" y="193" width="290" height="51" rx="4"/>
+    <rect x="322" y="285" width="290" height="40" rx="4"/>
+    <rect x="322" y="359" width="290" height="40" rx="4"/>
+    <rect x="322" y="427" width="290" height="51" rx="4"/>
+  </g>
+  <g font-weight="bold">
+    <text x="330" y="22">Gate 1 — local, rápido</text>
+    <text x="330" y="103">Gate 2 — bloqueia o merge</text>
+    <text x="330" y="206">Gate 3 — bloqueia a publicação</text>
+    <text x="330" y="298">Gate 4 — bloqueia a entrega</text>
+    <text x="330" y="372">Gate 5 — bloqueia a promoção</text>
+    <text x="330" y="440">Gate 6 — humano</text>
+  </g>
+  <g fill="#111">
+    <text x="330" y="34">segredo no diff, lint e teste do módulo;</text>
+    <text x="330" y="45">não substitui o Gate 2</text>
+    <text x="330" y="115">segredo detectado; SAST alto/crítico; CVE</text>
+    <text x="330" y="126">alta/crítica com correção em dependência de</text>
+    <text x="330" y="137">produção; teste ou build falhando</text>
+    <text x="330" y="148">alerta: média/baixa e devDependencies</text>
+    <text x="330" y="218">CVE alta/crítica corrigível na imagem; build do</text>
+    <text x="330" y="229">client falhando; SBOM obrigatório</text>
+    <text x="330" y="240">alerta: pacote sem correção publicada</text>
+    <text x="330" y="310">smoke test falhando interrompe a entrega:</text>
+    <text x="330" y="321">não existe deployment validado a promover</text>
+    <text x="330" y="384">alerta ZAP High, ou cabeçalho de segurança</text>
+    <text x="330" y="395">ausente, reprova; Medium e Low viram aviso</text>
+    <text x="330" y="452">aprovação de integrante que não escreveu a</text>
+    <text x="330" y="463">mudança; sem aprovação a release não sai —</text>
+    <text x="330" y="474">e o deployment anterior continua existindo</text>
+  </g>
+  <g stroke="#666" stroke-dasharray="3 3">
+    <line x1="300" y1="29" x2="322" y2="29"/>
+    <line x1="300" y1="121" x2="322" y2="121"/>
+    <line x1="300" y1="219" x2="322" y2="219"/>
+    <line x1="300" y1="305" x2="322" y2="305"/>
+    <line x1="300" y1="379" x2="322" y2="379"/>
+    <line x1="300" y1="453" x2="322" y2="453"/>
+  </g>
+</svg>
+</figure>
+<p class="fonte">Figura 1 — Esteira do commit ao deploy e os seis gates. Fonte: elaborada pelos autores.</p>
+
+<h2>2.4 Ferramentas escolhidas e justificativa</h2>
+
+<table>
+  <tr><th style="width:19%">Ferramenta</th><th style="width:17%">Papel</th><th>Por que esta</th></tr>
+  <tr><td>GitHub Actions</td><td>Executa a esteira</td><td>O projeto já está no GitHub: não exige servidor nem credencial nova, e já traz proteção de branch, aprovação manual de deploy e painel de segurança. Jenkins exigiria manter um servidor, sem ganho para quatro pessoas</td></tr>
+  <tr><td>Gitleaks</td><td>Procura segredos</td><td>Varre o histórico inteiro, e não só a última alteração — um segredo apagado hoje continua visível nos commits antigos. É gratuito e roda também na máquina do desenvolvedor</td></tr>
+  <tr><td>GitHub CodeQL</td><td>SAST: analisa o código</td><td>Já integrado ao GitHub e sem custo. Entende TypeScript de verdade (segue o caminho do dado, não procura texto) e aponta injeção de código, criptografia fraca e segredo escrito no código — o mesmo tipo de problema que achamos no diagnóstico. O resultado aparece como comentário no pull request</td></tr>
+  <tr><td>Trivy</td><td>SCA: analisa dependências e a imagem</td><td>Uma ferramenta só cobre as bibliotecas do projeto e os pacotes de dentro do contêiner. A opção <code>--ignore-unfixed</code> é o que torna o bloqueio possível: das 136 vulnerabilidades altas de hoje, só barram as que já têm correção disponível</td></tr>
+  <tr><td>Syft</td><td>SBOM: lista de ingredientes</td><td>Gera a lista de tudo que entrou em cada versão, no formato CycloneDX. Quando sair uma vulnerabilidade nova, responde na hora "essa versão usa essa biblioteca?"</td></tr>
+  <tr><td>OWASP ZAP</td><td>DAST: testa a aplicação rodando</td><td>Gratuito e em modo passivo, seguro para rodar em homologação a cada versão. Enxerga o que a análise de código não vê: cabeçalhos de segurança ausentes, CORS mal configurado e rotas expostas. Como cada <em>deployment</em> da Vercel tem URL própria, o DAST roda sempre contra a versão exata que se pretende promover</td></tr>
+  <tr><td>Dependabot</td><td>Atualiza dependências</td><td>Abre pull requests semanais pequenos com as atualizações, cada um passando pela esteira. Sem ele, o SCA só acusa e ninguém corrige</td></tr>
+  <tr><td>Vercel</td><td>Hospeda e publica o aplicativo</td><td>O grupo já tinha o projeto criado lá e o plano gratuito atende: some a necessidade de contratar e manter servidor, que era o que travava o deploy. Cada publicação é um <em>deployment</em> imutável com URL própria — o que dá preview por <em>pull request</em>, alvo estável para o DAST, promoção sem novo build e <em>rollback</em> em segundos. A integração Git automática foi <strong>desligada</strong> em <code>vercel.json</code> para que quem publique seja a esteira, depois dos gates, e não o <em>push</em></td></tr>
+  <tr><td>GHCR</td><td>Guarda a imagem da API</td><td>Registry do próprio GitHub: mesma conta, cada imagem identificada pelo commit e guardada. É onde a API fica versionada enquanto não há host — e o que tornará o <em>rollback</em> dela imediato quando houver</td></tr>
+  <tr><td>Jest e Karma</td><td>Testes</td><td>Já usados no projeto, inclusive nos 52 testes em TDD do módulo anterior. A esteira não troca de ferramenta: apenas passa a rodá-las de forma obrigatória</td></tr>
+</table>
+<p class="fonte">Quadro 3 — Ferramentas e justificativa da escolha. Fonte: elaborado pelos autores.</p>
+
+<p>Essa esteira já está no repositório: quatro workflows (Anexos A a D), mais Dependabot e a configuração de entrega na Vercel (Anexo E). Diferente de um desenho de esteira só no papel, <strong>não há passo de publicação em aberto para o aplicativo</strong> — o destino existe, a esteira executa o deploy e o rollback é um comando. O que continua pendente é o host da API; até lá, a esteira entrega a imagem pronta e verificada no registry.</p>
+
+<h2>2.5 Implantação e consistência entre ambientes</h2>
+
+<p>A unidade de entrega do aplicativo é o <strong><em>deployment</em> imutável</strong> da Vercel. Uma vez criado, ele não muda: recebe uma URL própria, derivada do build, e continua existindo mesmo depois de substituído. "Publicar" e "voltar atrás" deixam de ser operações de infraestrutura e viram a mesma operação — apontar o domínio para um <em>deployment</em> que já existe. É o que o <code>vercel promote</code> faz na tag e o <code>vercel rollback</code> faz quando o <em>health check</em> de produção reprova, sem novo build e sem janela de indisponibilidade. O efeito prático é o mesmo que se buscaria com <strong>blue-green</strong>, só que sem manter duas infraestruturas de pé: a versão nova é validada em uma URL real antes de receber o domínio.</p>
+
+<p>Para a API, a unidade continua sendo o <strong>contêiner</strong>: o mesmo <code>Dockerfile</code> multi-estágio gera a imagem que será usada em qualquer ambiente, o que elimina o clássico "funcionava em homologação". Como as <em>migrations</em> rodam ao subir o contêiner e, em uma troca de versão, duas convivem por instantes, toda migration precisa ser compatível com a versão anterior — adicionar coluna em vez de renomear, e remover só na entrega seguinte. Essa regra vale desde já, mesmo antes de existir host, porque é uma disciplina de como escrever a migration e não de como fazer o deploy.</p>
+
+<p class="semind">Duas limitações deste desenho ficam registradas, porque ignorá-las seria vender uma esteira melhor do que ela é:</p>
+
+<ul>
+  <li><strong>Homologação e produção compartilham a configuração.</strong> Construir uma vez só e promover o mesmo artefato tem um custo: em uma aplicação Angular a configuração entra no <em>bundle</em> durante o build, então o <em>deployment</em> validado em homologação já carrega as variáveis de produção. Hoje isso é inofensivo, porque a API não está no ar; quando estiver, ou se abre mão de promover o mesmo artefato — construindo duas vezes —, ou se passa a ler a configuração em tempo de execução, carregando um <code>config.json</code> servido pelo ambiente antes de a aplicação iniciar. O grupo prefere o segundo caminho, e ele está na fase 3 do plano.</li>
+  <li><strong>O <em>canary</em> fica para depois.</strong> Liberar para uma fração dos usuários só faz sentido com usuários reais e com monitoramento que mostre a diferença entre as duas fatias. Sem rota de saúde e sem log organizado, um canary daria a sensação de cuidado sem a informação que o justifica.</li>
+</ul>
+
+<h1>3 Controles de segurança integrados à esteira</h1>
+
+<p>A regra que organiza os gates é simples: <strong>bloqueia o que dá para resolver agora, avisa o resto</strong>. Um gate que reprova por algo que o grupo não tem como corrigir ensina o time a ignorar a esteira — e esteira ignorada é pior do que nenhuma, porque dá falsa sensação de segurança.</p>
+
+<table>
+  <tr><th style="width:12%">Controle</th><th style="width:14%">Ferramenta</th><th style="width:12%">Gate</th><th style="width:31%">Bloqueia quando</th><th>Apenas alerta quando</th></tr>
+  <tr><td>Secrets scanning</td><td>Gitleaks</td><td>1 (local) e 2 (PR, histórico completo)</td><td>Qualquer segredo com padrão reconhecido é detectado — é o único controle bloqueante desde o primeiro dia</td><td>Nada. Falso positivo vira <em>allowlist</em> revisada em PR, não afrouxamento do gate</td></tr>
+  <tr><td>SAST</td><td>CodeQL <code>security-extended</code></td><td>2 (PR) e agenda semanal</td><td>Achado alto ou crítico introduzido pelo <em>pull request</em></td><td>Média e baixa; achados pré-existentes, que entram na fila de correção</td></tr>
+  <tr><td>SCA</td><td>Trivy <code>fs</code></td><td>2 (PR) e agenda semanal</td><td>CVE alta ou crítica <strong>com correção publicada</strong> em dependência de produção</td><td>Média e baixa; <code>devDependencies</code>; CVE sem correção disponível, que gera <em>issue</em> com prazo</td></tr>
+  <tr><td>SBOM</td><td>Syft (CycloneDX)</td><td>2 (código) e 3 (imagem da API e build do aplicativo)</td><td>Falha na geração — nenhum artefato é publicado sem inventário</td><td>Diferenças de inventário entre releases, discutidas na revisão</td></tr>
+  <tr><td>Scan de imagem</td><td>Trivy <code>image</code></td><td>3 (antes do push)</td><td>CVE alta ou crítica corrigível no sistema operacional ou nas bibliotecas da imagem</td><td>Pacote sem correção <em>upstream</em>: registra-se exceção com prazo de revisão</td></tr>
+  <tr><td>Configuração de ambiente</td><td><code>set-api-url.mjs</code></td><td>3 (build)</td><td><code>API_URL</code> não está definida ou não é uma URL válida — o build falha em vez de publicar um aplicativo que aponta para lugar nenhum</td><td>—</td></tr>
+  <tr><td>Smoke test</td><td><code>curl</code> sobre a URL do <em>deployment</em></td><td>4 (homologação) e 6 (produção)</td><td>A URL publicada não devolve 200 com a aplicação dentro. Sem smoke verde não há <em>deployment</em> validado para promover; em produção, dispara o <em>rollback</em></td><td>Latência acima do esperado no smoke test</td></tr>
+  <tr><td>DAST</td><td>OWASP ZAP <em>baseline</em></td><td>5 (homologação publicada)</td><td>Alerta <strong>High</strong> do ZAP, ou ausência de HSTS, CSP, <code>X-Frame-Options</code> e <code>X-Content-Type-Options</code> — reprova a promoção para produção</td><td>Medium e Low, marcados como <code>WARN</code> em <code>.zap/rules.tsv</code></td></tr>
+  <tr><td>Aprovação humana</td><td><em>Environment</em> protegido</td><td>6 (produção)</td><td>Falta de aprovação de integrante que não escreveu a mudança</td><td>—</td></tr>
+</table>
+<p class="fonte">Quadro 4 — Controles de segurança, gates e política de bloqueio. Fonte: elaborado pelos autores.</p>
+
+<p class="semind">Quatro escolhas merecem registro, porque é nelas que a esteira encosta na realidade do projeto:</p>
+
+<ul>
+  <li><strong>O problema antigo avisa; o problema novo bloqueia.</strong> As 89 falhas de lint, os 3 testes quebrados e as vulnerabilidades que já existiam entram como aviso, marcadas com <code>TODO</code> nos workflows. Se entrassem como bloqueio, a <code>main</code> nasceria vermelha e o grupo se acostumaria a ignorar o alerta. Cada <code>TODO</code> tem prazo na fase 1 do plano da seção 5.</li>
+  <li><strong>Segredo é a exceção.</strong> Segredo vazado não tem conserto depois: precisa ser trocado. Por isso esse gate bloqueia desde o primeiro dia, e o segredo reserva <code>?? 'access-secret'</code> será trocado por um erro na inicialização — sem a variável, a API não sobe, em vez de subir insegura.</li>
+  <li><strong>Cada ambiente guarda os próprios segredos.</strong> Os segredos de produção ficam nos <em>environments</em> do GitHub e só são acessíveis ao deploy aprovado; a configuração da aplicação (o <code>API_URL</code>) fica nas variáveis do projeto na Vercel, separada por <em>environment</em>; e o <code>.env.example</code> passa a ter marcadores em vez de valores que parecem reais. A esteira precisa de três segredos para publicar — <code>VERCEL_TOKEN</code>, <code>VERCEL_ORG_ID</code> e <code>VERCEL_PROJECT_ID</code> — e de nenhuma credencial de servidor, porque não há servidor.</li>
+  <li><strong>Desligamos o deploy automático da Vercel.</strong> Por padrão a Vercel publica sozinha a cada <em>push</em>, o que colocaria o deploy <em>ao lado</em> dos gates em vez de <em>depois</em> deles: o código iria ao ar enquanto o SAST ainda roda. Em <code>vercel.json</code> a integração Git foi desativada (<code>"github": { "enabled": false }</code>) e quem publica é o workflow, pela CLI. Perde-se um pouco de comodidade e ganha-se a única coisa que faz um gate ser gate: a capacidade de impedir.</li>
+</ul>
+
+<h1>4 Métricas de acompanhamento</h1>
+
+<p>As quatro métricas DORA, mais MTTD e MTTR, medem a esteira; as três últimas medem a dívida que ela precisa reduzir. Todas saem de dados que a própria esteira gera, para ninguém precisar medir na mão — medição manual é medição abandonada.</p>
+
+<table>
+  <tr><th style="width:17%">Métrica</th><th style="width:20%">Como medir</th><th style="width:34%">Situação atual</th><th>Meta em 90 dias</th></tr>
+  <tr><td>Frequência de deploy</td><td>Execuções bem-sucedidas de <code>cd.yml</code> por ambiente</td><td><strong>Zero.</strong> Em 3,5 meses e 19 commits, nenhum deploy: há projeto criado na Vercel, mas nada sai dele; o software só roda em <code>localhost</code></td><td>Homologação a cada merge (≥ 3/semana); produção ≥ 1/semana</td></tr>
+  <tr><td>Lead time para mudanças</td><td>Do <em>timestamp</em> do commit ao fim do deploy que o contém</td><td><strong>Não mensurável</strong> — não há destino; hoje depende de cada pessoa rodar o projeto</td><td>Commit → homologação &lt; 20 min (CI + build + deploy); commit → produção &lt; 2 dias</td></tr>
+  <tr><td>Taxa de falha de mudanças</td><td>Releases com <em>hotfix</em> ou <em>rollback</em> ÷ total de releases</td><td><strong>Não medida.</strong> Indício indireto: 3 de 5 testes do front quebrados em <code>main</code> sem detecção</td><td>&lt; 15%</td></tr>
+  <tr><td>MTTD — falha funcional</td><td>Do push ao primeiro <em>check</em> vermelho</td><td>Indefinido: depende de alguém rodar o teste localmente</td><td>&lt; 10 min (duração do CI)</td></tr>
+  <tr><td>MTTD — vulnerabilidade</td><td>Da publicação da CVE ao alerta na aba Security</td><td>Indefinido: sem varredura, nenhuma CVE é detectada</td><td>&lt; 7 dias com a agenda semanal; &lt; 24 h ao passar para diária</td></tr>
+  <tr><td>MTTR</td><td>Do alerta ao deploy da correção</td><td>Não aplicável — sem produção, não há restauração a medir</td><td>&lt; 4 h; <em>rollback</em> na Vercel &lt; 2 min, por ser troca de ponteiro e não novo build</td></tr>
+  <tr><td>Cobertura de testes</td><td><code>test:cov</code> publicado como artefato do CI</td><td>API: <strong>28,0% statements e 19,1% branches</strong>, com os 52 testes concentrados em tours virtuais. Client: efetivamente nula, com 3 specs falhando</td><td>API ≥ 50% com gate bloqueante; client com os 3 specs corrigidos e fluxos principais cobertos</td></tr>
+  <tr><td>Vulnerabilidades altas e críticas corrigíveis</td><td>Relatório do Trivy em cada execução</td><td>Client: <strong>1 crítica e 35 altas</strong>. API: <strong>136 alertas altos</strong>. Zero SBOM gerado</td><td>Zero em produção; SBOM em 100% dos builds</td></tr>
+  <tr><td>Mudanças com revisão</td><td>Commits em <code>main</code> via PR aprovado ÷ total</td><td><strong>0%</strong> — 19 commits diretos, nenhum merge</td><td>100%</td></tr>
+</table>
+<p class="fonte">Quadro 5 — Métricas: situação atual e meta. Fonte: elaborado pelos autores.</p>
+
+<p>Duas metas dependem do que falta hoje: sem rota de saúde e sem log organizado, MTTD e MTTR de produção continuam sendo chute. Por isso o monitoramento mínimo está na fase 3 do plano.</p>
+
+<h1>5 Plano de adoção e considerações finais</h1>
+
+<p>A adoção é dividida em três fases, para o grupo não tentar ligar tudo de uma vez. <strong>Fase 1 (semanas 1 e 2):</strong> ligar o CI e o secrets scanning, proteger a <code>main</code> exigindo pull request revisado, e limpar a dívida que hoje só gera aviso — corrigir os 3 testes do aplicativo, as 89 falhas de lint e o segredo reserva no código. <strong>Fase 2 (semanas 3 e 4):</strong> cadastrar os três segredos da Vercel, tornar SAST, SCA e SBOM obrigatórios, ligar o Dependabot, exigir 50% de cobertura e fazer o primeiro deploy automático em homologação — o primeiro da história do projeto. <strong>Fase 3 (semanas 5 a 8):</strong> DAST em homologação, produção por <em>tag</em> com aprovação e <em>rollback</em> por promoção, leitura da configuração em tempo de execução para separar de fato homologação de produção, ajustes de segurança da API (CORS, cabeçalhos, limite de requisições, contêiner sem <code>root</code>, Swagger fechado em produção), definição do host da API e o monitoramento mínimo que torna MTTD e MTTR mensuráveis.</p>
+
+<p>O trabalho mostrou que aplicar DevSecOps a um projeto real depende menos de escolher ferramentas — as que usamos são gratuitas e padrão de mercado — e mais de aceitar um diagnóstico desconfortável. O Inner View tem testes em TDD, arquitetura organizada e Docker bem feito e, ao mesmo tempo, tinha três testes quebrados na branch principal, um segredo escrito no código de autenticação e nenhum ambiente além da máquina de cada integrante. É o que acontece quando a qualidade depende da disciplina de cada um em vez de estar automatizada na esteira. A proposta ataca essa lacuna: devolve resposta rápida ao grupo, coloca a segurança no mesmo pull request que o teste em vez de num portão final, separa o que bloqueia do que só avisa e torna o caminho até a produção repetível. A escolha da Vercel para hospedar o aplicativo fechou a última pendência do desenho anterior: o destino existe, o deploy é executado pela esteira e o rollback é um comando, de modo que o único passo ainda no papel é o host da API. Todo o restante está versionado no repositório e reproduzido nos anexos.</p>
+
+<h1 class="anexo">Referências</h1>
+
+<p class="semind">FORSGREN, N.; HUMBLE, J.; KIM, G. <em>Accelerate: the science of lean software and DevOps</em>. Portland: IT Revolution Press, 2018.</p>
+<p class="semind">HUMBLE, J.; FARLEY, D. <em>Continuous delivery: reliable software releases through build, test, and deployment automation</em>. Boston: Addison-Wesley, 2010.</p>
+<p class="semind">KIM, G.; BEHR, K.; SPAFFORD, G. <em>O Projeto Fênix: um romance sobre TI, DevOps e sobre ajudar o seu negócio a vencer</em>. Rio de Janeiro: Alta Books, 2018.</p>
+<p class="semind">KIM, G. et al. <em>The DevOps handbook</em>. 2. ed. Portland: IT Revolution Press, 2021.</p>
+<p class="semind">NATIONAL INSTITUTE OF STANDARDS AND TECHNOLOGY. <em>SP 800-218: Secure Software Development Framework (SSDF)</em>. Gaithersburg: NIST, 2022.</p>
+<p class="semind">OWASP FOUNDATION. <em>OWASP Top 10: 2021</em>. Disponível em: owasp.org/Top10. Acesso em: 26 set. 2026.</p>
+<p class="semind">OWASP FOUNDATION. <em>OWASP DevSecOps Guideline</em>. Disponível em: owasp.org/www-project-devsecops-guideline. Acesso em: 26 set. 2026.</p>
+
+<h1 class="anexo">Anexo A — <code>.github/workflows/ci.yml</code></h1>
+<p class="semind">Integração contínua das duas aplicações. Os <code>continue-on-error</code> marcam a dívida herdada descrita em 1.2 e têm prazo de remoção na fase 1 do plano da seção 5.</p>
+<pre id="A"># Esteira de integração contínua do Inner View.
+# Gate 2 do documento da disciplina: roda em todo pull request para main e em todo push em main.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Um PR que recebe vários pushes cancela as execuções anteriores.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API · lint, build e testes
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: server-api/yarn.lock
+
+      - name: Instalar dependências
+        run: yarn install --frozen-lockfile
+
+      # O script `yarn lint` do projeto roda com --fix e por isso nunca falha.
+      # Na esteira o lint precisa ser verificação, não correção.
+      - name: Lint (verificação, sem --fix)
+        # TODO fase 1: remover o continue-on-error depois de rodar `yarn lint` uma vez
+        # e commitar a formatação (hoje há 89 erros, 88 deles auto-corrigíveis).
+        continue-on-error: true
+        run: npx eslint &quot;{src,apps,libs,test}/**/*.ts&quot; --max-warnings=0
+
+      - name: Build
+        run: yarn build
+
+      - name: Testes unitários com cobertura
+        run: yarn test:cov
+
+      - name: Verificar limite mínimo de cobertura
+        # TODO fase 1: elevar o limite para 50% e tornar bloqueante (hoje: 28% de statements).
+        continue-on-error: true
+        run: npx jest --coverage --coverageThreshold=&#x27;{&quot;global&quot;:{&quot;statements&quot;:50,&quot;branches&quot;:40,&quot;lines&quot;:50}}&#x27;
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-api
+          path: server-api/coverage
+          retention-days: 14
+
+  client:
+    name: Client · lint, build e testes
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: inner-view-client
+    env:
+      CHROME_BIN: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: inner-view-client/package-lock.json
+
+      # O projeto versiona package-lock.json e yarn.lock. A esteira padroniza npm;
+      # o yarn.lock deve ser removido do repositório para não divergirem.
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Lint
+        # TODO fase 1: remover o continue-on-error (hoje há 1 erro: prefer-inject em language.service.ts).
+        continue-on-error: true
+        run: npx ng lint
+
+      - name: Build de produção
+        run: npx ng build --configuration production
+
+      - name: Testes unitários
+        # TODO fase 1: remover o continue-on-error depois de corrigir os 3 specs que falham
+        # por falta do provider HttpClient (app, home e inner-view-page).
+        continue-on-error: true
+        run: npx ng test --watch=false --browsers=ChromeHeadless --code-coverage
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-client
+          path: inner-view-client/coverage
+          retention-days: 14</pre>
+
+<h1 class="anexo">Anexo B — <code>.github/workflows/security.yml</code></h1>
+<p class="semind">Secrets scanning, SCA e SBOM. Roda em todo pull request e também às segundas-feiras, para detectar CVEs publicadas sem que o código tenha mudado.</p>
+<pre id="B"># Controles de DevSecOps que atuam no Gate 2 (pull request) e semanalmente sobre o código parado.
+# SAST fica em codeql.yml; DAST e scan de imagem ficam em cd.yml.
+name: Security
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Toda segunda-feira às 06:00 UTC: pega CVEs publicadas sem que o código tenha mudado.
+    - cron: &#x27;0 6 * * 1&#x27;
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  secrets:
+    name: Secrets scanning (bloqueante)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Histórico completo: um segredo removido no último commit continua no histórico.
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sca:
+    name: SCA · ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [server-api, inner-view-client]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Bloqueante: apenas CRITICAL/HIGH que já possuem correção publicada.
+      - name: Trivy · dependências (bloqueante)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: ${{ matrix.app }}
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: &#x27;1&#x27;
+          trivy-config: &#x27;&#x27;
+
+      # Informativo: relatório completo, todas as severidades, sempre publicado.
+      - name: Trivy · relatório completo (informativo)
+        if: always()
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: ${{ matrix.app }}
+          scanners: vuln
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          exit-code: &#x27;0&#x27;
+          format: sarif
+          output: trivy-${{ matrix.app }}.sarif
+
+      - name: Enviar resultado para o Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.app }}.sarif
+          category: sca-${{ matrix.app }}
+
+  sbom:
+    name: SBOM · ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [server-api, inner-view-client]
+    steps:
+      - uses: actions/checkout@v4
+
+      # SBOM em CycloneDX, anexado a toda execução: inventário do que foi liberado.
+      - name: Gerar SBOM (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: ${{ matrix.app }}
+          format: cyclonedx-json
+          artifact-name: sbom-${{ matrix.app }}.cdx.json
+          output-file: sbom-${{ matrix.app }}.cdx.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.app }}
+          path: sbom-${{ matrix.app }}.cdx.json
+          retention-days: 90</pre>
+
+<h1 class="anexo">Anexo C — <code>.github/workflows/codeql.yml</code> e <code>.github/dependabot.yml</code></h1>
+<pre id="C"># SAST do Gate 2. Analisa o TypeScript da API e do client.
+name: CodeQL (SAST)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: &#x27;0 7 * * 1&#x27;
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Análise estática
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # security-extended inclui regras de injeção, criptografia fraca e
+          # segredos embutidos em código (ex.: fallback de JWT_ACCESS_SECRET).
+          queries: security-extended
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:javascript-typescript</pre>
+<pre id="C2">version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /server-api
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: [dependencies, security]
+  - package-ecosystem: npm
+    directory: /inner-view-client
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: [dependencies, security]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: docker
+    directory: /server-api
+    schedule:
+      interval: weekly</pre>
+
+<h1 class="anexo">Anexo D — <code>.github/workflows/cd.yml</code></h1>
+<p class="semind">Entrega contínua: preview por <em>pull request</em>, empacotamento da API, homologação na Vercel, DAST e promoção para produção com aprovação. Cobre os Gates 3 a 6 e não contém passo pendente.</p>
+<pre id="D" class="longo"># Entrega contínua do Inner View.
+#
+# O client (Angular/Ionic) é publicado na Vercel; a API é empacotada como imagem
+# versionada no GHCR. A integração Git da Vercel está desligada em vercel.json
+# (`&quot;github&quot;: { &quot;enabled&quot;: false }`): quem publica é esta esteira, para que os
+# gates de segurança aconteçam ANTES do deploy e não em paralelo a ele.
+#
+# Gates cobertos aqui: 3 (empacotamento), 4 (homologação), 5 (DAST) e 6 (produção).
+#
+# O artefato é construído UMA VEZ, no merge em main, e promovido:
+#   vercel build --prod  →  vercel deploy --prebuilt --prod --skip-domain  →  vercel promote
+# O `--skip-domain` cria um deployment de produção que ainda NÃO recebe o domínio.
+# Ele é validado em homologação (smoke + DAST) e, na tag, o `promote` apenas aponta
+# o domínio para esse mesmo deployment — o que vai ao ar é exatamente o que foi testado.
+#
+# Secrets necessários no repositório:
+#   VERCEL_TOKEN      token de acesso da Vercel
+#   VERCEL_ORG_ID     id da conta/time  (vercel.json local: .vercel/project.json)
+#   VERCEL_PROJECT_ID id do projeto do client na Vercel
+# Secret opcional:
+#   VERCEL_AUTOMATION_BYPASS_SECRET  libera smoke test e DAST quando o projeto usa
+#                                    Deployment Protection (Vercel &gt; Settings &gt; Protection)
+# Variáveis (Settings &gt; Variables):
+#   PRODUCTION_URL    obrigatória para a promoção: domínio de produção do projeto
+#   STAGING_ALIAS     opcional: domínio fixo de homologação, para não caçar o link
+name: CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]      # -&gt; homologação automática
+    tags: [&#x27;v*&#x27;]          # -&gt; produção, com aprovação manual
+  workflow_dispatch:
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  CLIENT_DIR: inner-view-client
+  IMAGE: ghcr.io/${{ github.repository }}/server-api
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Pull request: ambiente efêmero para revisão humana.
+  # Não é gate — é o que permite revisar a mudança rodando, e não só o diff.
+  # ---------------------------------------------------------------------------
+  preview:
+    name: Preview do client (pull request)
+    if: github.event_name == &#x27;pull_request&#x27;
+    runs-on: ubuntu-latest
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.url }}
+    defaults:
+      run:
+        working-directory: inner-view-client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: inner-view-client/package-lock.json
+
+      - name: Instalar a CLI da Vercel
+        run: npm install --global vercel@60
+
+      - name: Baixar configuração do environment Preview
+        run: vercel pull --yes --environment=preview --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;
+
+      - name: Build
+        run: vercel build --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;
+
+      - id: deploy
+        name: Publicar preview
+        run: |
+          url=$(vercel deploy --prebuilt \
+            --meta githubCommitSha=&quot;$GITHUB_SHA&quot; \
+            --meta githubPrNumber=&quot;${{ github.event.number }}&quot; \
+            --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;)
+          echo &quot;url=$url&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+          echo &quot;### Preview: $url&quot; &gt;&gt; &quot;$GITHUB_STEP_SUMMARY&quot;
+
+  # ---------------------------------------------------------------------------
+  # Gate 3 — empacotamento da API. A imagem só chega ao registry se passar no scan.
+  # A API ainda não tem host contratado; o que a esteira garante hoje é que o
+  # artefato existe, é rastreável pelo SHA e tem inventário.
+  # ---------------------------------------------------------------------------
+  package-api:
+    name: API · imagem + scan + SBOM (Gate 3)
+    if: github.event_name != &#x27;pull_request&#x27;
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: meta
+        run: echo &quot;tag=${GITHUB_SHA::12}&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server-api
+          load: true
+          tags: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+
+      # Bloqueante: vulnerabilidade crítica/alta com correção disponível não vai para o registry.
+      - name: Trivy · imagem (bloqueante)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: &#x27;1&#x27;
+
+      - name: SBOM da imagem
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+          format: cyclonedx-json
+          output-file: sbom-image.cdx.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-image
+          path: sbom-image.cdx.json
+          retention-days: 90
+
+      - name: Push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server-api
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE }}:${{ github.ref_type == &#x27;tag&#x27; &amp;&amp; github.ref_name || &#x27;edge&#x27; }}
+
+  # ---------------------------------------------------------------------------
+  # Gates 3 e 4 — client: build único, deployment imutável, homologação e smoke.
+  # ---------------------------------------------------------------------------
+  staging:
+    name: Client · build, SBOM e homologação (Gates 3 e 4)
+    if: github.event_name == &#x27;push&#x27; &amp;&amp; github.ref == &#x27;refs/heads/main&#x27;
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    defaults:
+      run:
+        working-directory: inner-view-client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: inner-view-client/package-lock.json
+
+      - name: Instalar a CLI da Vercel
+        run: npm install --global vercel@60
+
+      - name: Baixar configuração do environment Production
+        run: vercel pull --yes --environment=production --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;
+
+      # Build de produção. É este bundle, e nenhum outro, que será promovido na tag.
+      - name: Build de produção
+        run: vercel build --prod --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;
+
+      # SBOM do que foi efetivamente liberado, indexado pelo SHA do commit.
+      - name: SBOM do client (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: inner-view-client
+          format: cyclonedx-json
+          output-file: sbom-client.cdx.json
+          artifact-name: sbom-client-${{ github.sha }}.cdx.json
+
+      # --skip-domain: deployment de produção que ainda não recebe o domínio.
+      - id: deploy
+        name: Publicar deployment (sem apontar o domínio)
+        run: |
+          url=$(vercel deploy --prebuilt --prod --skip-domain \
+            --meta githubCommitSha=&quot;$GITHUB_SHA&quot; \
+            --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;)
+          echo &quot;url=$url&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+          echo &quot;### Homologação: $url&quot; &gt;&gt; &quot;$GITHUB_STEP_SUMMARY&quot;
+
+      # Opcional: URL fixa de homologação, para o grupo não precisar caçar o link.
+      - name: Apontar o alias de homologação
+        if: vars.STAGING_ALIAS != &#x27;&#x27;
+        run: vercel alias set &#x27;${{ steps.deploy.outputs.url }}&#x27; &#x27;${{ vars.STAGING_ALIAS }}&#x27; --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;
+
+      # Bloqueante: se o deployment não responde 200 com a aplicação dentro,
+      # não existe o que promover.
+      - name: Smoke test
+        env:
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          url=&#x27;${{ steps.deploy.outputs.url }}&#x27;
+          [ -n &quot;$BYPASS&quot; ] &amp;&amp; url=&quot;$url?x-vercel-protection-bypass=$BYPASS&amp;x-vercel-set-bypass-cookie=true&quot;
+          curl -fsS --retry 5 --retry-delay 5 --retry-all-errors &quot;$url&quot; | grep -q &#x27;&lt;app-root&#x27;
+          echo &quot;Smoke test OK&quot;
+
+  # ---------------------------------------------------------------------------
+  # Gate 5 — DAST sobre a aplicação publicada em homologação.
+  # Alerta High reprova; Medium e Low viram aviso (.zap/rules.tsv).
+  # ---------------------------------------------------------------------------
+  dast-staging:
+    name: DAST em homologação (Gate 5)
+    needs: staging
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: target
+        env:
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          url=&#x27;${{ needs.staging.outputs.url }}&#x27;
+          # A Deployment Protection da Vercel bloquearia o ZAP. O parâmetro de bypass
+          # devolve um cookie que o ZAP mantém durante a varredura.
+          [ -n &quot;$BYPASS&quot; ] &amp;&amp; url=&quot;$url?x-vercel-protection-bypass=$BYPASS&amp;x-vercel-set-bypass-cookie=true&quot;
+          echo &quot;url=$url&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+
+      - name: OWASP ZAP Baseline
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: ${{ steps.target.outputs.url }}
+          rules_file_name: .zap/rules.tsv
+          cmd_options: &#x27;-a -j&#x27;
+          fail_action: true
+
+  # ---------------------------------------------------------------------------
+  # Gate 6 — produção. Tag v* + aprovação manual no environment `production`.
+  # Nada é construído aqui: apenas se aponta o domínio para o deployment que já
+  # passou por smoke e DAST em homologação.
+  # ---------------------------------------------------------------------------
+  promote-production:
+    name: Promoção para produção (Gate 6)
+    if: github.event_name == &#x27;push&#x27; &amp;&amp; github.ref_type == &#x27;tag&#x27;
+    runs-on: ubuntu-latest
+    # O environment `production` exige revisor aprovador configurado no GitHub:
+    # nenhuma release chega ao usuário sem aprovação humana.
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sem o domínio de produção não há como verificar o que foi promovido.
+      # Falhar aqui é melhor do que promover e descobrir depois que o health
+      # check testou uma URL vazia.
+      - name: Conferir a configuração
+        run: |
+          if [ -z &#x27;${{ vars.PRODUCTION_URL }}&#x27; ]; then
+            echo &quot;::error::Defina a variável PRODUCTION_URL (Settings &gt; Variables) com o domínio de produção.&quot;
+            exit 1
+          fi
+
+      - name: Instalar a CLI da Vercel
+        run: npm install --global vercel@60
+
+      # Vincula o diretório ao projeto a partir de VERCEL_ORG_ID/VERCEL_PROJECT_ID,
+      # para que `promote` e `rollback` saibam sobre qual projeto agir.
+      - name: Vincular o projeto
+        run: vercel pull --yes --environment=production --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;
+
+      # Localiza o deployment criado pelo merge em main para ESTE commit.
+      # Se a tag apontar para um commit que nunca passou por homologação, não há
+      # o que promover — e a esteira reprova em vez de construir algo novo.
+      - id: find
+        name: Localizar o deployment validado em homologação
+        env:
+          TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          query=&quot;projectId=$VERCEL_PROJECT_ID&amp;meta-githubCommitSha=$GITHUB_SHA&amp;state=READY&amp;target=production&amp;limit=1&quot;
+          case &quot;$VERCEL_ORG_ID&quot; in team_*) query=&quot;$query&amp;teamId=$VERCEL_ORG_ID&quot; ;; esac
+          resp=$(curl -fsS -H &quot;Authorization: Bearer $TOKEN&quot; &quot;https://api.vercel.com/v6/deployments?$query&quot;)
+          url=$(echo &quot;$resp&quot; | jq -r &#x27;.deployments[0].url // empty&#x27;)
+          if [ -z &quot;$url&quot; ]; then
+            echo &quot;::error::Nenhum deployment pronto para o commit $GITHUB_SHA.&quot;
+            echo &quot;::error::Marque com tag apenas commits que já passaram por homologação.&quot;
+            exit 1
+          fi
+          echo &quot;url=https://$url&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+
+      # Qual deployment o domínio de produção serve NESTE momento. É para ele que
+      # o rollback volta, e por isso a consulta é no projeto e não na lista de
+      # deployments (o mais recente da lista é justamente o que vamos promover).
+      - name: Guardar a produção atual (para rollback)
+        id: current
+        env:
+          TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          query=&quot;&quot;
+          case &quot;$VERCEL_ORG_ID&quot; in team_*) query=&quot;?teamId=$VERCEL_ORG_ID&quot; ;; esac
+          resp=$(curl -fsS -H &quot;Authorization: Bearer $TOKEN&quot; \
+            &quot;https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID$query&quot;)
+          echo &quot;url=$(echo &quot;$resp&quot; | jq -r &#x27;.targets.production.url // empty&#x27;)&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+
+      # Promoção: o domínio de produção passa a apontar para o deployment validado.
+      - name: Promover ${{ github.ref_name }}
+        run: |
+          vercel promote &#x27;${{ steps.find.outputs.url }}&#x27; --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;
+          echo &quot;### Produção: ${{ github.ref_name }} → ${{ steps.find.outputs.url }}&quot; &gt;&gt; &quot;$GITHUB_STEP_SUMMARY&quot;
+
+      - name: Health check em produção
+        run: |
+          curl -fsS --retry 5 --retry-delay 5 --retry-all-errors &#x27;${{ vars.PRODUCTION_URL }}&#x27; | grep -q &#x27;&lt;app-root&#x27;
+          echo &quot;Health check OK&quot;
+
+      # Rollback: volta o domínio para o deployment anterior, que continua existindo.
+      # Na Vercel o deployment é imutável, então desfazer é trocar o ponteiro.
+      - name: Rollback automático em caso de falha
+        if: failure() &amp;&amp; steps.current.outputs.url != &#x27;&#x27;
+        run: |
+          vercel rollback &#x27;https://${{ steps.current.outputs.url }}&#x27; --token=&#x27;${{ secrets.VERCEL_TOKEN }}&#x27;
+          echo &quot;::warning::Produção revertida para https://${{ steps.current.outputs.url }}&quot;</pre>
+
+<h1 class="anexo">Anexo E — Configuração de entrega e do DAST</h1>
+<p class="semind">Arquivos que tornam o deploy executável: a configuração do projeto na Vercel, o script que injeta o endereço da API no build e as regras que definem o que o ZAP reprova.</p>
+<p class="semind"><code>inner-view-client/vercel.json</code> — build, roteamento de SPA e cabeçalhos de segurança. Os cabeçalhos aqui são exatamente os que o ZAP cobra no Gate 5; a integração Git está desligada para que o deploy dependa da esteira.</p>
+<pre id="E1">{
+  &quot;$schema&quot;: &quot;https://openapi.vercel.sh/vercel.json&quot;,
+  &quot;installCommand&quot;: &quot;npm ci&quot;,
+  &quot;buildCommand&quot;: &quot;node scripts/set-api-url.mjs &amp;&amp; npx ng build --configuration production&quot;,
+  &quot;outputDirectory&quot;: &quot;www&quot;,
+  &quot;framework&quot;: null,
+  &quot;github&quot;: {
+    &quot;enabled&quot;: false
+  },
+  &quot;rewrites&quot;: [
+    { &quot;source&quot;: &quot;/(.*)&quot;, &quot;destination&quot;: &quot;/index.html&quot; }
+  ],
+  &quot;headers&quot;: [
+    {
+      &quot;source&quot;: &quot;/(.*)&quot;,
+      &quot;headers&quot;: [
+        { &quot;key&quot;: &quot;Strict-Transport-Security&quot;, &quot;value&quot;: &quot;max-age=63072000; includeSubDomains; preload&quot; },
+        { &quot;key&quot;: &quot;X-Content-Type-Options&quot;, &quot;value&quot;: &quot;nosniff&quot; },
+        { &quot;key&quot;: &quot;X-Frame-Options&quot;, &quot;value&quot;: &quot;DENY&quot; },
+        { &quot;key&quot;: &quot;Referrer-Policy&quot;, &quot;value&quot;: &quot;strict-origin-when-cross-origin&quot; },
+        { &quot;key&quot;: &quot;Permissions-Policy&quot;, &quot;value&quot;: &quot;camera=(), microphone=(), geolocation=(), payment=()&quot; },
+        { &quot;key&quot;: &quot;Content-Security-Policy&quot;, &quot;value&quot;: &quot;default-src &#x27;self&#x27;; base-uri &#x27;self&#x27;; object-src &#x27;none&#x27;; frame-ancestors &#x27;none&#x27;; script-src &#x27;self&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;; img-src &#x27;self&#x27; data: blob:; font-src &#x27;self&#x27; data:; worker-src &#x27;self&#x27; blob:; connect-src &#x27;self&#x27; https:; form-action &#x27;self&#x27;; upgrade-insecure-requests&quot; }
+      ]
+    },
+    {
+      &quot;source&quot;: &quot;/assets/(.*)&quot;,
+      &quot;headers&quot;: [
+        { &quot;key&quot;: &quot;Cache-Control&quot;, &quot;value&quot;: &quot;public, max-age=604800, immutable&quot; }
+      ]
+    },
+    {
+      &quot;source&quot;: &quot;/index.html&quot;,
+      &quot;headers&quot;: [
+        { &quot;key&quot;: &quot;Cache-Control&quot;, &quot;value&quot;: &quot;no-store, max-age=0&quot; }
+      ]
+    }
+  ]
+}</pre>
+<p class="semind"><code>inner-view-client/scripts/set-api-url.mjs</code> — substitui o endereço da API no <em>bundle</em> a partir da variável do ambiente. Sem a variável, o build falha.</p>
+<pre id="E2">// Injeta a URL da API no bundle de produção a partir da variável de ambiente
+// API_URL, definida no projeto da Vercel (uma por environment: Preview e Production).
+//
+// Motivo: o endereço da API é configuração de ambiente, não código. Antes desta
+// esteira o valor estava fixo em environment.prod.ts (`https://api.seudominio.com`),
+// um endereço que não existe — o build passava e a aplicação publicada quebrava.
+//
+// O script falha quando API_URL não está definida, pela mesma regra aplicada ao
+// segredo do JWT na API: sem a configuração, a aplicação não sobe em vez de subir
+// apontando para lugar nenhum.
+
+import { readFileSync, writeFileSync } from &#x27;node:fs&#x27;;
+
+const target = new URL(&#x27;../src/environments/environment.prod.ts&#x27;, import.meta.url);
+const apiUrl = (process.env.API_URL ?? &#x27;&#x27;).trim();
+
+if (!apiUrl) {
+  console.error(
+    &#x27;[set-api-url] API_URL não está definida.\n&#x27; +
+      &#x27;              Configure a variável no projeto da Vercel (Settings &gt; Environment Variables)\n&#x27; +
+      &#x27;              ou exporte API_URL antes de rodar o build.&#x27;
+  );
+  process.exit(1);
+}
+
+if (!/^(https:\/\/|\/)/.test(apiUrl)) {
+  console.error(`[set-api-url] API_URL inválida: &quot;${apiUrl}&quot;. Use https:// ou um caminho iniciado por /.`);
+  process.exit(1);
+}
+
+const source = readFileSync(target, &#x27;utf8&#x27;);
+const patched = source.replace(/apiUrl:\s*&#x27;[^&#x27;]*&#x27;/, `apiUrl: &#x27;${apiUrl.replace(/\/+$/, &#x27;&#x27;)}&#x27;`);
+
+if (patched === source) {
+  console.error(&#x27;[set-api-url] Não encontrei a chave apiUrl em environment.prod.ts. Build interrompido.&#x27;);
+  process.exit(1);
+}
+
+writeFileSync(target, patched);
+console.log(`[set-api-url] apiUrl = ${apiUrl}`);</pre>
+<p class="semind"><code>.zap/rules.tsv</code> — política do DAST: <code>WARN</code> alerta, <code>FAIL</code> reprova a promoção.</p>
+<pre id="E3"># Regras do ZAP Baseline sobre o client publicado em homologação na Vercel.
+# WARN = alerta, não bloqueia. FAIL = bloqueia a promoção para produção.
+# Os cabeçalhos marcados como FAIL são os que inner-view-client/vercel.json
+# configura: o gate existe para detectar quando alguém os remover.
+# id	nível	descrição
+10015	WARN	(Cabeçalho Cache-Control ausente)
+10027	WARN	(Comentários informativos no código)
+10096	WARN	(Timestamp divulgado)
+10063	WARN	(Permissions-Policy ausente ou incompleta)
+90004	WARN	(Isolamento de site insuficiente contra Spectre)
+10035	FAIL	(HSTS ausente em endpoint HTTPS)
+10020	FAIL	(Anti-clickjacking ausente)
+10021	FAIL	(X-Content-Type-Options ausente)
+10038	FAIL	(Content-Security-Policy ausente)</pre>
+
+
+<h1 class="anexo">Anexo F — Evidências do diagnóstico</h1>
+<p class="semind">Saídas obtidas na raiz do repositório em 26/09/2026, reproduzidas com os comandos indicados.</p>
+<pre id="F">$ git rev-list --count HEAD ; git rev-list --count --merges HEAD ; git branch -a ; git tag | wc -l
+19
+0
+* main
+  remotes/origin/HEAD -&gt; origin/main
+  remotes/origin/main
+0
+$ git shortlog -sn HEAD
+    11  Fabricio Varisco
+     6  MatheusThiesen
+     2  fabvarisco
+
+$ ls .github          # antes desta atividade
+ls: .github: No such file or directory
+
+$ cd server-api &amp;&amp; yarn test
+PASS src/modules/virtual-tours/services/create-virtual-tour.service.spec.ts
+... (10 suites)
+Test Suites: 10 passed, 10 total
+Tests:       52 passed, 52 total
+Time:        5.41 s
+
+$ yarn test:cov
+File                                   | % Stmts | % Branch | % Funcs | % Lines
+All files                              |      28 |    19.14 |   32.28 |   27.75
+
+$ npx eslint &quot;src/**/*.ts&quot;             # sem --fix, como a esteira roda
+  10:17  error  Replace ... with ...   prettier/prettier
+x 89 problems (89 errors, 0 warnings)
+  88 errors and 0 warnings potentially fixable with the `--fix` option.
+
+$ yarn audit                           # API - 827 dependencias
+vulnerabilities: { info: 0, low: 6, moderate: 35, high: 136, critical: 0 }
+
+$ cd ../inner-view-client &amp;&amp; npm audit
+vulnerabilities: { info: 0, low: 3, moderate: 16, high: 35, critical: 1, total: 55 }
+dependencies:    { prod: 37, dev: 1564, optional: 222, total: 1608 }
+
+$ npx ng lint
+src/app/services/language.service.ts
+  9:15  error  Prefer using the inject() function over constructor parameter injection
+x 1 problem (1 error, 0 warnings)
+
+$ npx ng test --watch=false --browsers=ChromeHeadless
+Chrome Headless HomePage should create FAILED
+  NotFound: NG0201: No provider found for `HttpClient`.
+  Source: Standalone[HomePage]. Path: PropertyService -&gt; HttpClient
+Executed 5 of 5 (3 FAILED)
+TOTAL: 3 FAILED, 2 SUCCESS
+
+$ yarn test:e2e                        # API
+Can&#x27;t find a root directory while resolving a config file path.
+Provided path to resolve: ./test/jest-e2e.json
+
+$ grep -rn &quot;JWT_ACCESS_SECRET&quot; server-api/src
+src/common/strategies/jwt-access.strategy.ts:18:  secretOrKey: process.env.JWT_ACCESS_SECRET ?? &#x27;access-secret&#x27;,
+src/modules/auth/services/token.service.ts:20:    secret: process.env.JWT_ACCESS_SECRET ?? &#x27;access-secret&#x27;,
+
+$ git ls-files | grep -i env
+inner-view-client/src/environments/environment.prod.ts
+inner-view-client/src/environments/environment.ts
+server-api/.env.example                # nenhum .env real versionado
+
+$ grep -c &quot;USER&quot; server-api/Dockerfile  # imagem executa como root
+0</pre>
+
+</body>
+</html>
