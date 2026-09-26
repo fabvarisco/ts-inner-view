@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inner View — Esteira DevSecOps</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #f54e00;
+        --primary-active: #d04200;
+        --ink: #26251e;
+        --body: #5a5852;
+        --muted: #807d72;
+        --muted-soft: #a09c92;
+        --hairline: #e6e5e0;
+        --hairline-soft: #efeee8;
+        --hairline-strong: #cfcdc4;
+        --canvas: #f7f7f4;
+        --canvas-soft: #fafaf7;
+        --surface-card: #ffffff;
+        --surface-strong: #e6e5e0;
+        --on-primary: #ffffff;
+        --success: #1f8a65;
+        --error: #cf2d56;
+        --max: 1200px;
+        --nav: 64px;
+        --foot: 72px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: Inter, system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      button {
+        font-family: inherit;
+      }
+
+      code,
+      .mono {
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 1.5;
+        letter-spacing: 0;
+      }
+
+      code {
+        background: var(--canvas-soft);
+        border: 1px solid var(--hairline);
+        border-radius: 4px;
+        padding: 1px 6px;
+      }
+
+      .top-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        height: var(--nav);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        background: var(--canvas);
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .wordmark {
+        margin: 0;
+        color: var(--primary);
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.4;
+        letter-spacing: 0;
+      }
+
+      .wordmark span {
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .counter {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .deck {
+        height: 100%;
+      }
+
+      .slide {
+        display: none;
+        height: 100%;
+        padding: calc(var(--nav) + 28px) 80px calc(var(--foot) + 24px);
+        overflow: auto;
+      }
+
+      .slide.is-active {
+        display: block;
+      }
+
+      .inner {
+        max-width: var(--max);
+        margin: 0 auto;
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.4;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 16ch;
+        font-size: clamp(40px, 5.2vw, 72px);
+        font-weight: 400;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        color: var(--ink);
+      }
+
+      h2 {
+        margin: 0 0 28px;
+        font-size: clamp(28px, 3vw, 36px);
+        font-weight: 400;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        color: var(--ink);
+      }
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.4;
+        color: var(--ink);
+      }
+
+      p {
+        margin: 0;
+        color: var(--body);
+      }
+
+      .lede {
+        max-width: 640px;
+        margin-top: 20px;
+        font-size: 16px;
+        line-height: 1.5;
+        color: var(--body);
+      }
+
+      .closing {
+        margin-top: 24px;
+        max-width: 760px;
+        color: var(--ink);
+      }
+
+      .names {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        margin-top: 40px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .repo {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .grid-4 {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .card {
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+        padding: 24px;
+      }
+
+      .card p + p {
+        margin-top: 8px;
+      }
+
+      .kicker {
+        margin: 0 0 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .status {
+        display: inline-block;
+        margin: 0 0 10px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+      }
+
+      .status-block {
+        color: var(--success);
+      }
+
+      .status-alert {
+        color: var(--muted);
+      }
+
+      .status-gap {
+        color: var(--error);
+      }
+
+      .rail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .rail li {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 12px;
+        align-items: start;
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+
+      .rail .n {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--ink);
+      }
+
+      .rail h3 {
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+
+      .rail p {
+        font-size: 14px;
+      }
+
+      .table-wrap {
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      th,
+      td {
+        padding: 10px 14px;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid var(--hairline);
+        color: var(--body);
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      th {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+        background: var(--canvas-soft);
+      }
+
+      td strong {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .tools {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+      }
+
+      .tool {
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      .tool h3 {
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+
+      .tool p {
+        font-size: 13px;
+        color: var(--body);
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .split > .card {
+        height: 100%;
+      }
+
+      .note {
+        margin-top: 16px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        height: var(--foot);
+        display: grid;
+        grid-template-columns: 180px 1fr auto;
+        align-items: center;
+        gap: 16px;
+        padding: 0 32px;
+        background: var(--canvas);
+        border-top: 1px solid var(--hairline);
+      }
+
+      .hint {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .kbd {
+        display: inline-block;
+        min-width: 22px;
+        padding: 2px 6px;
+        border: 1px solid var(--hairline-strong);
+        border-radius: 4px;
+        background: var(--surface-card);
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        text-align: center;
+        color: var(--ink);
+      }
+
+      .pager {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .pager button {
+        width: 8px;
+        height: 8px;
+        padding: 0;
+        border: 0;
+        border-radius: 9999px;
+        background: var(--hairline-strong);
+        cursor: pointer;
+      }
+
+      .pager button.is-on {
+        background: var(--ink);
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn {
+        height: 40px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .btn-secondary {
+        background: var(--surface-card);
+        color: var(--ink);
+        border: 1px solid var(--hairline-strong);
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: var(--on-primary);
+        border: 0;
+      }
+
+      .btn-primary:hover,
+      .btn-primary:focus-visible {
+        background: var(--primary-active);
+      }
+
+      .btn:disabled {
+        color: var(--muted-soft);
+        background: var(--surface-strong);
+        border-color: transparent;
+        cursor: default;
+      }
+
+      .btn-primary:disabled {
+        color: var(--on-primary);
+        background: var(--muted-soft);
+      }
+
+      @media (max-width: 1024px) {
+        .slide {
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .grid-4,
+        .tools {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .split {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        h1 {
+          font-size: 32px;
+          letter-spacing: -0.02em;
+        }
+
+        .slide {
+          padding-left: 20px;
+          padding-right: 20px;
+        }
+
+        .top-nav,
+        .nav {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        .grid-2,
+        .grid-3,
+        .grid-4,
+        .rail,
+        .tools {
+          grid-template-columns: 1fr;
+        }
+
+        .hint {
+          display: none;
+        }
+
+        .nav {
+          grid-template-columns: 1fr auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top-nav">
+      <p class="wordmark">Inner View <span>· Esteira DevSecOps</span></p>
+      <div class="counter" data-count>01 / 12</div>
+    </header>
+
+    <main class="deck">
+      <section class="slide is-active" id="capa">
+        <div class="inner">
+          <p class="eyebrow">Unisinos · Cultura e Práticas DevOps e DevSecOps · Setembro 2026</p>
+          <h1>A esteira do commit ao deploy</h1>
+          <p class="lede">
+            Diagnóstico do Inner View, o caminho até homologação e produção,
+            os controles de segurança em cada gate, e a conferência do que
+            os workflows realmente travam.
+          </p>
+          <p class="names">
+            <span>Fabricio Varisco</span>
+            <span>Gustavo Potrich</span>
+            <span>Lucas Krug</span>
+            <span>Matheus Thiesen</span>
+          </p>
+          <p class="repo">github.com/fabvarisco/ts-inner-view</p>
+        </div>
+      </section>
+
+      <section class="slide" id="pedido">
+        <div class="inner">
+          <p class="eyebrow">O que a apresentação precisa responder</p>
+          <h2>Quatro pontos, no código da esteira</h2>
+          <div class="grid grid-2">
+            <article class="card">
+              <p class="kicker">01 · Contexto</p>
+              <h3>Diagnóstico honesto</h3>
+              <p>
+                Objetivo, stack e forma de trabalho. Como o código entra hoje,
+                como é testado, como chega ao ambiente e quais verificações
+                de segurança existem.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">02 · Desenho</p>
+              <h3>Do commit ao deploy</h3>
+              <p>
+                Etapas, ferramenta de cada uma, estratégia de branches,
+                ambientes e o critério para promover uma versão.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">03 · Segurança</p>
+              <h3>SAST, DAST, SCA, SBOM e segredos</h3>
+              <p>
+                Em qual gate cada controle atua, o que interrompe a esteira
+                e o que só gera alerta.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">04 · Métricas</p>
+              <h3>Situação atual e meta</h3>
+              <p>
+                Frequência de deploy, lead time, taxa de falha de mudanças,
+                MTTD e MTTR, mais a dívida que a esteira precisa reduzir.
+              </p>
+            </article>
+          </div>
+          <p class="closing">
+            Os quatro blocos estão escritos nos workflows. A validação, no
+            fim, separa o que o YAML já segura do que ainda depende de
+            configuração do GitHub ou de um <code>continue-on-error</code>.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide" id="projeto">
+        <div class="inner">
+          <p class="eyebrow">Contextualização</p>
+          <h2>Tour virtual, duas aplicações, uma main</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <p class="kicker">Objetivo</p>
+              <h3>Visitar o imóvel sem ir até lá</h3>
+              <p>
+                O corretor cadastra o imóvel, envia o panorama de cada
+                cômodo, liga um ambiente ao outro e publica o tour.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">server-api</p>
+              <h3>NestJS, Prisma, PostgreSQL</h3>
+              <p>
+                JWT, validação com Zod e Docker Compose no dia a dia.
+                A imagem de produção é Node 22. O Swagger fica em
+                <code>/docs</code>.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">inner-view-client</p>
+              <h3>Angular, Ionic, Three.js</h3>
+              <p>
+                O visualizador 360° roda no browser. Capacitor cobre o
+                Android. Em produção o destino previsto é a Vercel.
+              </p>
+            </article>
+          </div>
+          <div class="grid grid-2" style="margin-top: 16px">
+            <article class="card">
+              <p class="kicker">Forma de trabalho observada</p>
+              <h3>Cada um sobe o banco na própria máquina</h3>
+              <p>
+                19 commits entre 09/06/2026 e 26/09/2026, todos direto em
+                <code>main</code>. Nenhum pull request, nenhum merge, nenhuma
+                revisão por outro integrante.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">O que o repositório passa a exigir</p>
+              <h3>Trunk-based, branch curta, pull request</h3>
+              <p>
+                <code>feat/</code> e <code>fix/</code> voltam para
+                <code>main</code> por PR. Os workflows disparam nesse PR,
+                no push em <code>main</code> e na tag <code>v*</code>.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="diagnostico">
+        <div class="inner">
+          <p class="eyebrow">Diagnóstico · antes da esteira passar a valer</p>
+          <h2>Integração, teste, entrega, segurança</h2>
+          <div class="grid grid-2">
+            <article class="card">
+              <p class="kicker">Como o código é integrado</p>
+              <h3>A main aceita qualquer push</h3>
+              <p>
+                Sem proteção de branch e sem verificação automática. O que
+                entra em <code>main</code> entra porque alguém commitou, não
+                porque um gate passou.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">Como é testado</p>
+              <h3>52 testes verdes, cobertura de 28%</h3>
+              <p>
+                A suíte de tours virtuais passa. O resto da API — autenticação,
+                imóveis, usuários, panoramas — fica de fora. No client, 3 dos
+                5 specs quebram por falta de <code>HttpClient</code> e
+                permanecem assim na <code>main</code>.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">Como chega ao ambiente</p>
+              <h3>Não chega</h3>
+              <p>
+                Em três meses e meio o software só rodou em
+                <code>localhost</code>. O build de produção do client apontava
+                para <code>https://api.seudominio.com</code>, um endereço que
+                não existe. A imagem da API era gerada na máquina de quem
+                desenvolvia e não ia para registry.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">Quais verificações de segurança existem</p>
+              <h3>Nenhuma automática</h3>
+              <p>
+                O <code>.env</code> está no <code>.gitignore</code>. O código
+                de autenticação ainda assina o token com
+                <code>'access-secret'</code> se
+                <code>JWT_ACCESS_SECRET</code> faltar. Dependências: 136
+                alertas altos na API; 1 crítico e 35 altos no client. Sem
+                SBOM e sem varredura de segredos no histórico.
+              </p>
+            </article>
+          </div>
+          <p class="closing">
+            O retrato cabe numa frase: três testes do client quebrados na
+            branch principal, sem ninguém perceber. Falta o mecanismo que avisa
+            o grupo, não só cuidado individual.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide" id="veredito-diagnostico">
+        <div class="inner">
+          <p class="eyebrow">Diagnóstico · o que mudou no repositório</p>
+          <h2>A esteira existe. Parte da dívida continua aviso</h2>
+          <div class="split">
+            <article class="card">
+              <p class="status status-block">Versionado</p>
+              <h3>Quatro workflows e o Dependabot</h3>
+              <p>
+                <code>ci.yml</code>, <code>security.yml</code>,
+                <code>codeql.yml</code> e <code>cd.yml</code>. A Vercel deixa
+                de publicar sozinha: <code>github.enabled</code> está
+                <code>false</code>.
+              </p>
+            </article>
+            <div class="grid">
+              <article class="card">
+                <p class="status status-block">O job da API falha se o teste quebrar</p>
+                <p>
+                  <code>yarn test:cov</code> roda sem
+                  <code>continue-on-error</code>. Build da API e build de
+                  produção do client também.
+                </p>
+              </article>
+              <article class="card">
+                <p class="status status-alert">Aviso, com TODO de fase 1</p>
+                <p>
+                  Lint da API (89 erros), lint do client (1 erro), os 3 specs
+                  quebrados e o piso de 50% de cobertura seguem com
+                  <code>continue-on-error: true</code>. Um PR vermelho nesses
+                  passos ainda fica verde para o GitHub.
+                </p>
+              </article>
+              <article class="card">
+                <p class="status status-gap">Fora do que o YAML consegue impor</p>
+                <p>
+                  Exigir revisor na <code>main</code> e exigir estes checks
+                  antes do merge é configuração do GitHub. Ela não está no
+                  repositório. Sem ela, o desenho de PR é convenção do grupo.
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="pipeline">
+        <div class="inner">
+          <p class="eyebrow">Desenho · GitHub Actions</p>
+          <h2>Seis momentos, do commit à tag</h2>
+          <ol class="rail">
+            <li>
+              <span class="n">01</span>
+              <div>
+                <h3>Estação</h3>
+                <p>
+                  Branch curta. O desenho prevê Gitleaks, ESLint e o teste do
+                  módulo tocado antes do push.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span class="n">02</span>
+              <div>
+                <h3>Pull request para main</h3>
+                <p>
+                  CI, CodeQL, Gitleaks, Trivy e SBOM. O client ganha um
+                  preview efêmero na Vercel.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span class="n">03</span>
+              <div>
+                <h3>Merge em main</h3>
+                <p>
+                  Um build só: <code>vercel build --prod</code>. A API vira
+                  imagem <code>ghcr.io</code> com a tag do SHA.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span class="n">04</span>
+              <div>
+                <h3>Homologação</h3>
+                <p>
+                  <code>vercel deploy --prebuilt --prod --skip-domain</code>.
+                  O domínio público não se move. O smoke procura
+                  <code>&lt;app-root</code>.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span class="n">05</span>
+              <div>
+                <h3>DAST</h3>
+                <p>
+                  OWASP ZAP baseline na URL de homologação. Alerta High
+                  reprova o job. Medium e Low avisam.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span class="n">06</span>
+              <div>
+                <h3>Tag v*</h3>
+                <p>
+                  <code>vercel promote</code> aponta o domínio para o mesmo
+                  deployment. Health check falho dispara
+                  <code>vercel rollback</code>.
+                </p>
+              </div>
+            </li>
+          </ol>
+          <p class="note">
+            A API para no passo 03: a imagem só entra no GHCR depois do scan.
+            Ainda não há host para colocá-la no ar.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide" id="ambientes">
+        <div class="inner">
+          <p class="eyebrow">Branches, ambientes, promoção</p>
+          <h2>O que foi testado é o que vai ao ar</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ambiente</th>
+                  <th>Disparo</th>
+                  <th>Artefato</th>
+                  <th>Critério</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Local</strong></td>
+                  <td><code>docker compose</code> e <code>ng serve</code></td>
+                  <td>Build na máquina, com o seed</td>
+                  <td>Desenvolvimento</td>
+                </tr>
+                <tr>
+                  <td><strong>Preview</strong></td>
+                  <td>Pull request</td>
+                  <td>URL efêmera na Vercel</td>
+                  <td>Rever a mudança rodando</td>
+                </tr>
+                <tr>
+                  <td><strong>Homologação</strong></td>
+                  <td>Push em <code>main</code></td>
+                  <td>Deployment imutável, indexado pelo SHA</td>
+                  <td>Smoke verde. O domínio público fica parado</td>
+                </tr>
+                <tr>
+                  <td><strong>Produção</strong></td>
+                  <td>Tag <code>v*</code> e environment <code>production</code></td>
+                  <td>O mesmo deployment de homologação</td>
+                  <td>Aprovação humana e health check. Falha volta o ponteiro</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid grid-2" style="margin-top: 16px">
+            <article class="card">
+              <p class="kicker">Por que trunk-based</p>
+              <p>
+                Quatro pessoas e entrega pequena. GitFlow acrescentaria
+                branches de release sem ganho de feedback. A <code>main</code>
+                fica sempre no estado que se pretende promover.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">Por que a Vercel não publica no push</p>
+              <p>
+                Com a integração Git ligada, o client iria ao ar enquanto o
+                SAST ainda corre. Quem publica é o
+                <code>cd.yml</code>, depois do build único.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="ferramentas">
+        <div class="inner">
+          <p class="eyebrow">Justificativa</p>
+          <h2>O que já está no GitHub, de graça</h2>
+          <div class="tools">
+            <article class="tool">
+              <h3>GitHub Actions</h3>
+              <p>O repositório já está no GitHub. Jenkins seria um servidor a mais para quatro pessoas.</p>
+            </article>
+            <article class="tool">
+              <h3>Gitleaks</h3>
+              <p>Lê o histórico inteiro. Um segredo apagado no último commit continua visível nos anteriores.</p>
+            </article>
+            <article class="tool">
+              <h3>CodeQL</h3>
+              <p>SAST de TypeScript no próprio GitHub. O pacote <code>security-extended</code> cobre injeção, cripto fraca e segredo no código.</p>
+            </article>
+            <article class="tool">
+              <h3>Trivy</h3>
+              <p>Uma ferramenta nas dependências e na imagem. <code>ignore-unfixed</code> só barra CVE que já tem correção.</p>
+            </article>
+            <article class="tool">
+              <h3>Syft</h3>
+              <p>SBOM CycloneDX. Responde se uma versão liberada contém a biblioteca de uma CVE nova.</p>
+            </article>
+            <article class="tool">
+              <h3>OWASP ZAP</h3>
+              <p>DAST passivo na URL exata de homologação. Enxerga cabeçalho ausente, o que o SAST não vê.</p>
+            </article>
+            <article class="tool">
+              <h3>Dependabot</h3>
+              <p>PR semanal de npm na API e no client, mensal nas Actions, semanal na imagem Docker.</p>
+            </article>
+            <article class="tool">
+              <h3>Vercel</h3>
+              <p>Deployment imutável, preview por PR, promoção e rollback sem segundo build.</p>
+            </article>
+            <article class="tool">
+              <h3>GHCR</h3>
+              <p>A imagem da API fica no registry do GitHub, marcada pelo SHA, enquanto não há host.</p>
+            </article>
+            <article class="tool">
+              <h3>Jest e Karma</h3>
+              <p>Já usados no projeto, inclusive nos 52 testes do módulo de tours. A esteira só passa a rodá-los.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="controles">
+        <div class="inner">
+          <p class="eyebrow">Controles na esteira</p>
+          <h2>Bloqueia o que dá para corrigir agora</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Controle</th>
+                  <th>Gate</th>
+                  <th>Bloqueia</th>
+                  <th>Alerta</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Segredos</strong><br />Gitleaks</td>
+                  <td>PR, push em main, toda segunda</td>
+                  <td>Qualquer padrão reconhecido, no histórico completo</td>
+                  <td>Falso positivo vira allowlist em PR</td>
+                </tr>
+                <tr>
+                  <td><strong>SAST</strong><br />CodeQL</td>
+                  <td>PR, push em main, toda segunda</td>
+                  <td>O desenho pede achado alto ou crítico novo no PR</td>
+                  <td>Média, baixa e achado que já estava no repositório</td>
+                </tr>
+                <tr>
+                  <td><strong>SCA</strong><br />Trivy fs</td>
+                  <td>PR, push em main, toda segunda</td>
+                  <td>HIGH ou CRITICAL com correção publicada (<code>exit-code: 1</code>)</td>
+                  <td>Relatório SARIF completo, severidade média e baixa, CVE sem correção</td>
+                </tr>
+                <tr>
+                  <td><strong>SBOM</strong><br />Syft</td>
+                  <td>PR e, de novo, no empacotamento</td>
+                  <td>No empacotamento, a falha para o job antes de publicar. No PR, o job fica vermelho e só trava o merge se o check for obrigatório</td>
+                  <td>A diferença entre releases fica para a revisão</td>
+                </tr>
+                <tr>
+                  <td><strong>Imagem</strong><br />Trivy image</td>
+                  <td>Depois do build, antes do push ao GHCR</td>
+                  <td>HIGH ou CRITICAL corrigível na imagem</td>
+                  <td>Pacote sem correção upstream</td>
+                </tr>
+                <tr>
+                  <td><strong>Smoke</strong><br />curl</td>
+                  <td>Homologação e produção</td>
+                  <td>A URL não devolve 200 com <code>&lt;app-root</code>. Em produção, o rollback roda</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td><strong>DAST</strong><br />ZAP baseline</td>
+                  <td>Homologação publicada</td>
+                  <td>Alerta High, e a falta de HSTS, CSP, anti-clickjacking ou <code>X-Content-Type-Options</code>. Esses itens estão como FAIL em <code>.zap/rules.tsv</code></td>
+                  <td>Cache-Control, comentários, timestamp, Permissions-Policy e isolamento de site: <code>WARN</code></td>
+                </tr>
+                <tr>
+                  <td><strong>Pessoa</strong><br />environment</td>
+                  <td>Produção, na tag <code>v*</code></td>
+                  <td>O job declara o environment <code>production</code>, para um revisor aprovar</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="validacao">
+        <div class="inner">
+          <p class="eyebrow">Validação · o YAML contra o desenho</p>
+          <h2>Seis pontos o workflow ainda não segura</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <p class="status status-gap">01 · CI permissivo</p>
+              <h3>Lint, client e cobertura</h3>
+              <p>
+                Três passos de <code>ci.yml</code> têm
+                <code>continue-on-error: true</code>. O teste da API, o build
+                e o scan de dependências seguem capazes de falhar o job.
+              </p>
+            </article>
+            <article class="card">
+              <p class="status status-gap">02 · SAST publica</p>
+              <h3>CodeQL não escolhe severidade</h3>
+              <p>
+                O workflow envia o resultado. Ele não termina com erro por
+                alerta alto ou crítico. Esse bloqueio mora na política de
+                code scanning do GitHub.
+              </p>
+            </article>
+            <article class="card">
+              <p class="status status-gap">03 · Esteiras paralelas</p>
+              <h3>O CD não espera o CI</h3>
+              <p>
+                <code>cd.yml</code> não declara <code>needs</code> de CI,
+                Security ou CodeQL. Sem check obrigatório na branch, um merge
+                com teste vermelho ainda publica.
+              </p>
+            </article>
+            <article class="card">
+              <p class="status status-gap">04 · DAST à parte</p>
+              <h3>A tag não consulta o ZAP</h3>
+              <p>
+                <code>promote-production</code> só procura um deployment
+                <code>READY</code> daquele SHA. A tag não roda o DAST de novo,
+                e o ZAP só enxerga o client.
+              </p>
+            </article>
+            <article class="card">
+              <p class="status status-gap">05 · Gate local</p>
+              <h3>Não há pre-commit</h3>
+              <p>
+                Gitleaks existe no PR, com <code>fetch-depth: 0</code>. Na
+                máquina do desenvolvedor, não. O fallback
+                <code>'access-secret'</code> continua no serviço de token.
+              </p>
+            </article>
+            <article class="card">
+              <p class="status status-gap">06 · SCA amplo</p>
+              <h3>A pasta inteira entra no bloqueio</h3>
+              <p>
+                O critério implementado é severidade mais correção disponível.
+                O desenho ainda pedia aviso, e não bloqueio, para
+                <code>devDependencies</code>.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="metricas">
+        <div class="inner">
+          <p class="eyebrow">Métricas · linha de base e meta em 90 dias</p>
+          <h2>Definidas no trabalho, ainda sem job que as grave</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Métrica</th>
+                  <th>Situação atual</th>
+                  <th>Meta</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Frequência de deploy</strong><br />Execuções verdes do CD</td>
+                  <td>Zero. Nenhum deploy em 3,5 meses</td>
+                  <td>Homologação a cada merge, pelo menos 3 por semana. Produção pelo menos 1 por semana</td>
+                </tr>
+                <tr>
+                  <td><strong>Lead time</strong><br />Do commit ao deploy que o contém</td>
+                  <td>Sem destino, não há o que medir</td>
+                  <td>Commit até homologação em menos de 20 minutos. Até produção, em menos de 2 dias</td>
+                </tr>
+                <tr>
+                  <td><strong>Taxa de falha de mudanças</strong><br />Hotfix ou rollback ÷ releases</td>
+                  <td>Sem release. Indício: 3 de 5 testes do client quebrados na main</td>
+                  <td>Abaixo de 15%</td>
+                </tr>
+                <tr>
+                  <td><strong>MTTD funcional</strong><br />Do push ao primeiro check vermelho</td>
+                  <td>Depende de alguém rodar o teste localmente</td>
+                  <td>Abaixo de 10 minutos, a duração do CI</td>
+                </tr>
+                <tr>
+                  <td><strong>MTTD de vulnerabilidade</strong><br />Da CVE ao alerta no Security</td>
+                  <td>Sem varredura, nenhuma CVE era vista</td>
+                  <td>Abaixo de 7 dias com a agenda semanal</td>
+                </tr>
+                <tr>
+                  <td><strong>MTTR</strong><br />Do alerta ao deploy da correção</td>
+                  <td>Sem produção, não há restauração</td>
+                  <td>Abaixo de 4 horas. Rollback na Vercel abaixo de 2 minutos</td>
+                </tr>
+                <tr>
+                  <td><strong>Cobertura</strong><br />Artefato do CI</td>
+                  <td>API: 28% statements, 19,1% branches. Client: os 3 specs falham</td>
+                  <td>API em 50% com o piso bloqueante. Client com os specs corrigidos</td>
+                </tr>
+                <tr>
+                  <td><strong>CVE alta e crítica corrigível</strong><br />Relatório do Trivy</td>
+                  <td>Client: 1 crítica e 35 altas. API: 136 altas. SBOM inexistente na linha de base</td>
+                  <td>Zero em produção. SBOM em todo build</td>
+                </tr>
+                <tr>
+                  <td><strong>Mudanças com revisão</strong><br />Commits em main via PR</td>
+                  <td>0% — 19 commits diretos</td>
+                  <td>100%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note">
+            MTTD e MTTR de produção continuam estimativa enquanto a API não
+            tiver rota de saúde nem log. O rollback do client já está escrito:
+            é troca de ponteiro, não um build novo.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide" id="fecho">
+        <div class="inner">
+          <p class="eyebrow">Validação final</p>
+          <h2>O desenho atende. O bloqueio, em parte</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <p class="status status-block">Atende</p>
+              <h3>Os quatro pontos estão no repositório</h3>
+              <p>
+                Contexto e dívida estão nos comentários do CI. O caminho do
+                PR ao promote está no CD. SAST, DAST, SCA, SBOM e secrets
+                têm workflow, com a regra de bloquear ou avisar escrita no
+                passo. A tabela de métricas tem linha de base e meta.
+              </p>
+            </article>
+            <article class="card">
+              <p class="status status-gap">Ainda aviso</p>
+              <h3>O que o TODO deixou passar</h3>
+              <p>
+                Lint, specs do client e o piso de cobertura. O fallback do
+                JWT. A separação entre dependência de produção e ferramenta
+                de desenvolvimento. A coleta automática das métricas DORA.
+              </p>
+            </article>
+            <article class="card">
+              <p class="status status-alert">Configuração do GitHub</p>
+              <h3>O que o YAML não carrega</h3>
+              <p>
+                Proteção da <code>main</code> com os quatro workflows
+                obrigatórios. Revisor no environment <code>production</code>.
+                Code scanning reprovando alerta alto. Sem isso, a tag e o
+                merge seguem possíveis com a esteira vermelha ao lado.
+              </p>
+            </article>
+          </div>
+          <p class="closing">
+            A API segue empacotada e sem host. O client tem destino, build
+            único, smoke, DAST e rollback. O próximo passo que torna o gate
+            um gate é ligar esses checks na branch, e tirar o
+            <code>continue-on-error</code> da dívida já conhecida.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="nav">
+      <div class="hint">
+        <span class="kbd">←</span>
+        <span class="kbd">→</span>
+        setas para navegar
+      </div>
+      <div class="pager" data-pager></div>
+      <div class="actions">
+        <button class="btn btn-secondary" type="button" data-prev>Anterior</button>
+        <button class="btn btn-primary" type="button" data-next>Próximo</button>
+      </div>
+    </footer>
+
+    <script>
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const count = document.querySelector("[data-count]");
+      const pager = document.querySelector("[data-pager]");
+      const prev = document.querySelector("[data-prev]");
+      const next = document.querySelector("[data-next]");
+      let index = 0;
+
+      slides.forEach((_, i) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("aria-label", "Slide " + (i + 1));
+        button.addEventListener("click", () => show(i));
+        pager.appendChild(button);
+      });
+
+      function show(i) {
+        index = Math.max(0, Math.min(slides.length - 1, i));
+        slides.forEach((slide, n) => {
+          slide.classList.toggle("is-active", n === index);
+        });
+        pager.querySelectorAll("button").forEach((button, n) => {
+          button.classList.toggle("is-on", n === index);
+        });
+        count.textContent =
+          String(index + 1).padStart(2, "0") +
+          " / " +
+          String(slides.length).padStart(2, "0");
+        prev.disabled = index === 0;
+        next.disabled = index === slides.length - 1;
+        next.textContent = index === slides.length - 1 ? "Fim" : "Próximo";
+        document.querySelector(".slide.is-active").scrollTop = 0;
+        if (location.hash !== "#" + slides[index].id) {
+          history.replaceState(null, "", "#" + slides[index].id);
+        }
+      }
+
+      prev.addEventListener("click", () => show(index - 1));
+      next.addEventListener("click", () => show(index + 1));
+
+      document.addEventListener("keydown", (event) => {
+        const tag = event.target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        if (event.key === "ArrowRight" || event.key === "PageDown") {
+          event.preventDefault();
+          show(index + 1);
+        } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+          event.preventDefault();
+          show(index - 1);
+        } else if (event.key === "Home") {
+          show(0);
+        } else if (event.key === "End") {
+          show(slides.length - 1);
+        }
+      });
+
+      const start = slides.findIndex((slide) => "#" + slide.id === location.hash);
+      show(start === -1 ? 0 : start);
+    </script>
+  </body>
+</html>
