@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inner View — O que a esteira já faz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #f54e00;
+        --primary-active: #d04200;
+        --ink: #26251e;
+        --body: #5a5852;
+        --muted: #807d72;
+        --muted-soft: #a09c92;
+        --hairline: #e6e5e0;
+        --hairline-strong: #cfcdc4;
+        --canvas: #f7f7f4;
+        --canvas-soft: #fafaf7;
+        --surface-card: #ffffff;
+        --surface-strong: #e6e5e0;
+        --on-primary: #ffffff;
+        --success: #1f8a65;
+        --error: #cf2d56;
+        --max: 1200px;
+        --nav: 64px;
+        --foot: 72px;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: Inter, system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      button { font-family: inherit; }
+
+      code, pre {
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 1.5;
+      }
+
+      code {
+        background: var(--canvas-soft);
+        border: 1px solid var(--hairline);
+        border-radius: 4px;
+        padding: 1px 6px;
+      }
+
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+      }
+
+      .top-nav {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 2;
+        height: var(--nav);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        background: var(--canvas);
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .wordmark {
+        margin: 0;
+        color: var(--primary);
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+
+      .wordmark span { color: var(--muted); font-weight: 400; }
+
+      .counter {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .deck { height: 100%; }
+
+      .slide {
+        display: none;
+        height: 100%;
+        padding: calc(var(--nav) + 28px) 80px calc(var(--foot) + 20px);
+        overflow: auto;
+      }
+
+      .slide.is-active { display: block; }
+
+      .inner { max-width: var(--max); margin: 0 auto; }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.4;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 16ch;
+        font-size: clamp(40px, 5.2vw, 72px);
+        font-weight: 400;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+      }
+
+      h2 {
+        margin: 0 0 24px;
+        font-size: clamp(28px, 3vw, 36px);
+        font-weight: 400;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+
+      p { margin: 0; color: var(--body); }
+
+      .lede { max-width: 640px; margin-top: 20px; color: var(--body); }
+      .closing { margin-top: 20px; max-width: 820px; color: var(--ink); }
+      .names { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 40px; color: var(--muted); font-size: 14px; }
+      .repo { margin-top: 12px; font-size: 13px; color: var(--muted); }
+      .note { margin-top: 16px; font-size: 14px; color: var(--muted); }
+
+      .grid { display: grid; gap: 16px; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
+      .grid-5 { grid-template-columns: repeat(5, 1fr); }
+
+      .card, .code-block, .table-wrap {
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+      }
+
+      .card { padding: 24px; }
+      .card p + p { margin-top: 8px; }
+
+      .code-block { padding: 20px; color: var(--ink); }
+
+      .kicker, .status {
+        margin: 0 0 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+      }
+
+      .kicker { color: var(--muted); }
+      .status-block { color: var(--success); }
+      .status-alert { color: var(--muted); }
+
+      .file {
+        margin: 0 0 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--ink);
+      }
+
+      .rail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .rail li {
+        display: grid;
+        grid-template-columns: 40px 1fr;
+        gap: 8px;
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+
+      .rail .n {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--ink);
+      }
+
+      .rail h3 { font-size: 16px; margin-bottom: 4px; }
+      .rail p { font-size: 14px; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4; }
+      th, td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--hairline); color: var(--body); }
+      tr:last-child td { border-bottom: 0; }
+      th {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+        background: var(--canvas-soft);
+      }
+      td strong { color: var(--ink); font-weight: 600; }
+      .table-wrap { overflow: auto; }
+
+      .nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        height: var(--foot);
+        display: grid;
+        grid-template-columns: 220px 1fr auto;
+        align-items: center;
+        gap: 16px;
+        padding: 0 32px;
+        background: var(--canvas);
+        border-top: 1px solid var(--hairline);
+      }
+
+      .hint { font-size: 13px; color: var(--muted); }
+
+      .kbd {
+        display: inline-block;
+        min-width: 22px;
+        padding: 2px 6px;
+        border: 1px solid var(--hairline-strong);
+        border-radius: 4px;
+        background: var(--surface-card);
+        font-size: 12px;
+        font-weight: 500;
+        text-align: center;
+        color: var(--ink);
+      }
+
+      .pager { display: flex; justify-content: center; gap: 8px; }
+      .pager button {
+        width: 8px;
+        height: 8px;
+        padding: 0;
+        border: 0;
+        border-radius: 9999px;
+        background: var(--hairline-strong);
+        cursor: pointer;
+      }
+      .pager button.is-on { background: var(--ink); }
+
+      .actions { display: flex; gap: 8px; }
+      .btn {
+        height: 40px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .btn-secondary {
+        background: var(--surface-card);
+        color: var(--ink);
+        border: 1px solid var(--hairline-strong);
+      }
+      .btn-primary {
+        background: var(--primary);
+        color: var(--on-primary);
+        border: 0;
+      }
+      .btn-primary:hover, .btn-primary:focus-visible { background: var(--primary-active); }
+      .btn:disabled { color: var(--muted-soft); background: var(--surface-strong); border-color: transparent; cursor: default; }
+      .btn-primary:disabled { color: var(--on-primary); background: var(--muted-soft); }
+
+      @media (max-width: 1024px) {
+        .slide { padding-left: 32px; padding-right: 32px; }
+        .grid-4, .grid-5 { grid-template-columns: 1fr 1fr; }
+      }
+
+      @media (max-width: 720px) {
+        h1 { font-size: 32px; letter-spacing: -0.02em; }
+        .slide { padding-left: 20px; padding-right: 20px; }
+        .top-nav, .nav { padding-left: 16px; padding-right: 16px; }
+        .grid-2, .grid-3, .grid-4, .grid-5, .rail { grid-template-columns: 1fr; }
+        .hint { display: none; }
+        .nav { grid-template-columns: 1fr auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top-nav">
+      <p class="wordmark">Inner View <span>· O que a esteira já faz</span></p>
+      <div class="counter" data-count>01 / 10</div>
+    </header>
+
+    <main class="deck">
+      <section class="slide is-active" id="capa">
+        <div class="inner">
+          <p class="eyebrow">Unisinos · DevOps e DevSecOps · Setembro 2026</p>
+          <h1>A esteira que já está no repositório</h1>
+          <p class="lede">
+            Quatro workflows no GitHub Actions, do pull request até a tag de
+            produção. Este deck mostra o que cada arquivo já executa.
+          </p>
+          <p class="names">
+            <span>Fabricio Varisco</span>
+            <span>Gustavo Potrich</span>
+            <span>Lucas Krug</span>
+            <span>Matheus Thiesen</span>
+          </p>
+          <p class="repo">github.com/fabvarisco/ts-inner-view · .github/workflows</p>
+        </div>
+      </section>
+
+      <section class="slide" id="inventario">
+        <div class="inner">
+          <p class="eyebrow">O que já existe</p>
+          <h2>Cinco arquivos ligam o caminho</h2>
+          <div class="grid grid-5">
+            <article class="card">
+              <p class="file">ci.yml</p>
+              <h3>Integração</h3>
+              <p>Lint, build e testes da API e do client em todo PR e em todo push na main.</p>
+            </article>
+            <article class="card">
+              <p class="file">security.yml</p>
+              <h3>Segredos, SCA, SBOM</h3>
+              <p>Gitleaks, Trivy nas dependências e inventário CycloneDX. Também roda toda segunda.</p>
+            </article>
+            <article class="card">
+              <p class="file">codeql.yml</p>
+              <h3>SAST</h3>
+              <p>CodeQL em TypeScript, pacote security-extended, no PR e na agenda semanal.</p>
+            </article>
+            <article class="card">
+              <p class="file">cd.yml</p>
+              <h3>Entrega</h3>
+              <p>Preview, imagem da API, homologação na Vercel, ZAP e promoção por tag.</p>
+            </article>
+            <article class="card">
+              <p class="file">dependabot.yml</p>
+              <h3>Atualização</h3>
+              <p>PRs semanais de npm e Docker, e mensais das GitHub Actions.</p>
+            </article>
+          </div>
+          <p class="closing">
+            Junto deles já estão o <code>Dockerfile</code> da API, o
+            <code>vercel.json</code> do client e o <code>.zap/rules.tsv</code>
+            que decide o que o DAST reprova.
+          </p>
+        </div>
+      </section>
+
+      <section class="slide" id="projeto">
+        <div class="inner">
+          <p class="eyebrow">Contexto</p>
+          <h2>Duas aplicações, um repositório</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <p class="kicker">Produto</p>
+              <h3>Tour virtual de imóvel</h3>
+              <p>O corretor publica os panoramas. O cliente percorre o imóvel sem ir até lá.</p>
+            </article>
+            <article class="card">
+              <p class="kicker">server-api</p>
+              <h3>NestJS, Prisma, PostgreSQL</h3>
+              <p>Sobe com Docker Compose no dia a dia. A esteira empacota a mesma imagem e publica no GHCR.</p>
+            </article>
+            <article class="card">
+              <p class="kicker">inner-view-client</p>
+              <h3>Angular, Ionic, Three.js</h3>
+              <p>O visualizador 360° vai para a Vercel. Quem publica é o <code>cd.yml</code>, não o push.</p>
+            </article>
+          </div>
+          <div class="grid grid-2" style="margin-top: 16px">
+            <article class="card">
+              <p class="kicker">Como o grupo trabalha</p>
+              <h3>Branch curta, pull request, main</h3>
+              <p>
+                <code>feat/</code> e <code>fix/</code> voltam para
+                <code>main</code> por PR. Trunk-based: a main é o que se promove.
+                A tag <code>v*</code> é o gatilho de produção.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">De onde a esteira partiu</p>
+              <h3>19 commits direto na main</h3>
+              <p>
+                Antes dos workflows, não havia PR, nem automação, e o software
+                só rodava em localhost. A cobertura da API medida nessa base é
+                28%. Três specs do client estavam quebrados na main.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="disparos">
+        <div class="inner">
+          <p class="eyebrow">Quando cada arquivo roda</p>
+          <h2>PR, main, tag e segunda-feira</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Workflow</th>
+                  <th>Pull request</th>
+                  <th>Push na main</th>
+                  <th>Tag v*</th>
+                  <th>Agenda</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>CI</strong></td>
+                  <td>API e client</td>
+                  <td>API e client</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td><strong>Security</strong></td>
+                  <td>Gitleaks, Trivy, SBOM</td>
+                  <td>Os mesmos três</td>
+                  <td>—</td>
+                  <td>Segunda, 06:00 UTC</td>
+                </tr>
+                <tr>
+                  <td><strong>CodeQL</strong></td>
+                  <td>SAST</td>
+                  <td>SAST</td>
+                  <td>—</td>
+                  <td>Segunda, 07:00 UTC</td>
+                </tr>
+                <tr>
+                  <td><strong>CD</strong></td>
+                  <td>Preview do client</td>
+                  <td>Imagem, homologação, smoke, ZAP</td>
+                  <td>Promoção e health check</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td><strong>Dependabot</strong></td>
+                  <td colspan="4">Abre os PRs sozinho: npm e Docker toda semana, Actions todo mês</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="code-block" style="margin-top: 16px">
+            <pre>on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:</pre>
+          </div>
+          <p class="note">O trecho é o gatilho do CI. Security e CodeQL repetem esse par e acrescentam o cron semanal.</p>
+        </div>
+      </section>
+
+      <section class="slide" id="pipeline">
+        <div class="inner">
+          <p class="eyebrow">Do commit ao deploy</p>
+          <h2>O caminho que o CD já descreve</h2>
+          <ol class="rail">
+            <li>
+              <span class="n">01</span>
+              <div>
+                <h3>Pull request</h3>
+                <p>CI, Gitleaks, Trivy, SBOM e CodeQL. O client ganha URL de preview na Vercel.</p>
+              </div>
+            </li>
+            <li>
+              <span class="n">02</span>
+              <div>
+                <h3>Merge na main</h3>
+                <p>Um build: <code>vercel build --prod</code>. A API vira imagem com os 12 primeiros caracteres do SHA.</p>
+              </div>
+            </li>
+            <li>
+              <span class="n">03</span>
+              <div>
+                <h3>Imagem no GHCR</h3>
+                <p>Trivy na imagem. Se passar, o push publica <code>ghcr.io/.../server-api</code>.</p>
+              </div>
+            </li>
+            <li>
+              <span class="n">04</span>
+              <div>
+                <h3>Homologação</h3>
+                <p><code>vercel deploy --prebuilt --prod --skip-domain</code>. O domínio público não se move. O smoke procura <code>&lt;app-root</code>.</p>
+              </div>
+            </li>
+            <li>
+              <span class="n">05</span>
+              <div>
+                <h3>DAST</h3>
+                <p>ZAP baseline na URL de homologação, com as regras de <code>.zap/rules.tsv</code>.</p>
+              </div>
+            </li>
+            <li>
+              <span class="n">06</span>
+              <div>
+                <h3>Tag v*</h3>
+                <p><code>vercel promote</code> aponta o domínio para esse deployment. Health check falho chama <code>vercel rollback</code>.</p>
+              </div>
+            </li>
+          </ol>
+          <p class="note">A API para no passo 03. A imagem fica versionada no registry. Ainda não há host para colocá-la no ar.</p>
+        </div>
+      </section>
+
+      <section class="slide" id="ambientes">
+        <div class="inner">
+          <p class="eyebrow">Ambientes e promoção</p>
+          <h2>O artefato testado é o que recebe o domínio</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ambiente</th>
+                  <th>Quem cria</th>
+                  <th>O que já acontece</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Local</strong></td>
+                  <td><code>docker compose</code> e <code>ng serve</code></td>
+                  <td>Desenvolvimento, com o seed da imobiliária Relax Inn</td>
+                </tr>
+                <tr>
+                  <td><strong>Preview</strong></td>
+                  <td>Job <code>preview</code>, no PR</td>
+                  <td>URL efêmera. O environment do GitHub se chama <code>preview</code></td>
+                </tr>
+                <tr>
+                  <td><strong>Homologação</strong></td>
+                  <td>Job <code>staging</code>, no push da main</td>
+                  <td>Deployment imutável, sem domínio. Smoke obrigatório. Alias opcional em <code>STAGING_ALIAS</code></td>
+                </tr>
+                <tr>
+                  <td><strong>Produção</strong></td>
+                  <td>Job <code>promote-production</code>, na tag</td>
+                  <td>Environment <code>production</code>. Procura o deployment daquele SHA e promove. Exige <code>PRODUCTION_URL</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid grid-2" style="margin-top: 16px">
+            <article class="card">
+              <p class="kicker">Build único</p>
+              <p>O merge constrói. A tag não constrói de novo. <code>vercel promote</code> só move o domínio para o deployment que já passou pelo smoke.</p>
+            </article>
+            <article class="card">
+              <p class="kicker">A Vercel não publica sozinha</p>
+              <p>Em <code>vercel.json</code>, <code>github.enabled</code> está <code>false</code>. O deploy sai do workflow, depois dos passos anteriores do job.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="ci">
+        <div class="inner">
+          <p class="eyebrow">ci.yml · o que o pull request já roda</p>
+          <h2>Dois jobs, Node 22, em paralelo</h2>
+          <div class="grid grid-2">
+            <article class="card">
+              <p class="kicker">API · server-api</p>
+              <h3>Yarn com lockfile congelado</h3>
+              <p>ESLint sem <code>--fix</code>, <code>yarn build</code> e <code>yarn test:cov</code>. A cobertura sobe como artefato <code>coverage-api</code> por 14 dias.</p>
+              <p>O teste unitário falha o job se quebrar. O piso de 50% de statements roda em seguida e hoje fica como aviso.</p>
+            </article>
+            <article class="card">
+              <p class="kicker">Client · inner-view-client</p>
+              <h3>npm ci e build de produção</h3>
+              <p><code>ng lint</code>, <code>ng build --configuration production</code> e <code>ng test</code> no Chrome headless, com cobertura.</p>
+              <p>O build de produção falha o job. Lint e a suíte do client rodam e, no estado atual, seguem como aviso.</p>
+            </article>
+          </div>
+          <div class="code-block" style="margin-top: 16px">
+            <pre>concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# API
+- yarn install --frozen-lockfile
+- yarn build
+- yarn test:cov
+
+# Client
+- npm ci
+- npx ng build --configuration production
+- npx ng test --watch=false --browsers=ChromeHeadless --code-coverage</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="controles">
+        <div class="inner">
+          <p class="eyebrow">Segurança já ligada na esteira</p>
+          <h2>O que bloqueia e o que alerta</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Controle</th>
+                  <th>Onde</th>
+                  <th>Bloqueia</th>
+                  <th>Alerta</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Segredos</strong><br />Gitleaks</td>
+                  <td>PR, main e segunda. Histórico completo</td>
+                  <td>Padrão de segredo reconhecido. O passo não tem continue-on-error</td>
+                  <td>Falso positivo entra numa allowlist revisada</td>
+                </tr>
+                <tr>
+                  <td><strong>SAST</strong><br />CodeQL</td>
+                  <td>PR, main e segunda</td>
+                  <td>A análise em si, se o CodeQL não consegue rodar</td>
+                  <td>O resultado vai para a aba Security. Média, baixa e achado antigo ficam lá</td>
+                </tr>
+                <tr>
+                  <td><strong>SCA</strong><br />Trivy</td>
+                  <td>Pastas da API e do client</td>
+                  <td>HIGH ou CRITICAL com correção publicada, exit-code 1</td>
+                  <td>SARIF com todas as severidades, exit-code 0, enviado ao Security</td>
+                </tr>
+                <tr>
+                  <td><strong>SBOM</strong><br />Syft</td>
+                  <td>No PR e de novo no CD</td>
+                  <td>No CD, falha na geração interrompe o job antes de publicar</td>
+                  <td>O artefato CycloneDX fica 90 dias</td>
+                </tr>
+                <tr>
+                  <td><strong>Imagem</strong><br />Trivy</td>
+                  <td>Depois do build, antes do GHCR</td>
+                  <td>HIGH ou CRITICAL corrigível na imagem</td>
+                  <td>Pacote sem correção upstream</td>
+                </tr>
+                <tr>
+                  <td><strong>DAST</strong><br />ZAP</td>
+                  <td>Depois da homologação</td>
+                  <td>Alerta High. HSTS, CSP, anti-clickjacking e nosniff estão FAIL no rules.tsv</td>
+                  <td>Cache, comentários, timestamp e Permissions-Policy estão WARN</td>
+                </tr>
+                <tr>
+                  <td><strong>Smoke</strong><br />curl</td>
+                  <td>Homologação e produção</td>
+                  <td>A URL não devolve a aplicação. Em produção, o rollback roda</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="entrega">
+        <div class="inner">
+          <p class="eyebrow">cd.yml · os cinco jobs</p>
+          <h2>Preview, imagem, homologação, ZAP, tag</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <p class="status status-block">preview</p>
+              <h3>URL por pull request</h3>
+              <p><code>vercel pull</code> no environment preview, <code>vercel build</code> e <code>vercel deploy --prebuilt</code>. A URL volta no environment do GitHub.</p>
+            </article>
+            <article class="card">
+              <p class="status status-block">package-api</p>
+              <h3>Imagem com scan e SBOM</h3>
+              <p>Build local, Trivy, CycloneDX, depois push para o GHCR com a tag do SHA e <code>edge</code> na main.</p>
+            </article>
+            <article class="card">
+              <p class="status status-block">staging</p>
+              <h3>Deploy sem domínio</h3>
+              <p><code>--skip-domain</code> cria o deployment de produção sem apontar o site. O smoke exige <code>&lt;app-root</code> na resposta.</p>
+            </article>
+            <article class="card">
+              <p class="status status-block">dast-staging</p>
+              <h3>ZAP nessa URL</h3>
+              <p>Depende do staging. <code>fail_action: true</code>. Se houver segredo de bypass da Vercel, o ZAP passa pela proteção do deployment.</p>
+            </article>
+            <article class="card">
+              <p class="status status-block">promote-production</p>
+              <h3>A tag só promove</h3>
+              <p>Procura o deployment READY daquele commit. <code>vercel promote</code> move o domínio. Se o health check falha, <code>vercel rollback</code> devolve o ponteiro anterior.</p>
+            </article>
+            <article class="card">
+              <p class="kicker">Segredos que o CD já lê</p>
+              <h3>Três obrigatórios</h3>
+              <p><code>VERCEL_TOKEN</code>, <code>VERCEL_ORG_ID</code> e <code>VERCEL_PROJECT_ID</code>. <code>PRODUCTION_URL</code> é variável. Sem ela, a tag falha antes de promover.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="metricas">
+        <div class="inner">
+          <p class="eyebrow">O que o grupo acompanha</p>
+          <h2>Linha de base e meta em 90 dias</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Métrica</th>
+                  <th>Situação da linha de base</th>
+                  <th>Meta</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Frequência de deploy</strong></td>
+                  <td>Zero deploys em 3,5 meses. A esteira agora tem o job que passa a contar</td>
+                  <td>Homologação a cada merge, ao menos 3 por semana. Produção ao menos 1 por semana</td>
+                </tr>
+                <tr>
+                  <td><strong>Lead time</strong></td>
+                  <td>Sem destino, não havia o que medir</td>
+                  <td>Commit até homologação em menos de 20 minutos. Até produção, em menos de 2 dias</td>
+                </tr>
+                <tr>
+                  <td><strong>Taxa de falha de mudanças</strong></td>
+                  <td>Sem release. Indício: 3 de 5 testes do client quebrados na main</td>
+                  <td>Abaixo de 15%</td>
+                </tr>
+                <tr>
+                  <td><strong>MTTD funcional</strong></td>
+                  <td>Alguém precisava rodar o teste na máquina</td>
+                  <td>Abaixo de 10 minutos, a duração do CI</td>
+                </tr>
+                <tr>
+                  <td><strong>MTTD de vulnerabilidade</strong></td>
+                  <td>Sem varredura, a CVE não aparecia</td>
+                  <td>Abaixo de 7 dias, pela agenda de segunda</td>
+                </tr>
+                <tr>
+                  <td><strong>MTTR</strong></td>
+                  <td>Sem produção, não havia restauração</td>
+                  <td>Abaixo de 4 horas. O rollback da Vercel, abaixo de 2 minutos</td>
+                </tr>
+                <tr>
+                  <td><strong>Cobertura</strong></td>
+                  <td>API em 28% de statements. O CI já publica o relatório</td>
+                  <td>50% na API, com o piso passando a falhar o job</td>
+                </tr>
+                <tr>
+                  <td><strong>Revisão</strong></td>
+                  <td>0% dos 19 commits entrou por PR</td>
+                  <td>100% via pull request na main</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="nav">
+      <div class="hint">
+        <span class="kbd">←</span>
+        <span class="kbd">→</span>
+        setas para navegar
+      </div>
+      <div class="pager" data-pager></div>
+      <div class="actions">
+        <button class="btn btn-secondary" type="button" data-prev>Anterior</button>
+        <button class="btn btn-primary" type="button" data-next>Próximo</button>
+      </div>
+    </footer>
+
+    <script>
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const count = document.querySelector("[data-count]");
+      const pager = document.querySelector("[data-pager]");
+      const prev = document.querySelector("[data-prev]");
+      const next = document.querySelector("[data-next]");
+      let index = 0;
+
+      slides.forEach((_, i) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("aria-label", "Slide " + (i + 1));
+        button.addEventListener("click", () => show(i));
+        pager.appendChild(button);
+      });
+
+      function show(i) {
+        index = Math.max(0, Math.min(slides.length - 1, i));
+        slides.forEach((slide, n) => slide.classList.toggle("is-active", n === index));
+        pager.querySelectorAll("button").forEach((button, n) => button.classList.toggle("is-on", n === index));
+        count.textContent = String(index + 1).padStart(2, "0") + " / " + String(slides.length).padStart(2, "0");
+        prev.disabled = index === 0;
+        next.disabled = index === slides.length - 1;
+        next.textContent = index === slides.length - 1 ? "Fim" : "Próximo";
+        const active = document.querySelector(".slide.is-active");
+        if (active) active.scrollTop = 0;
+        if (location.hash !== "#" + slides[index].id) {
+          history.replaceState(null, "", "#" + slides[index].id);
+        }
+      }
+
+      prev.addEventListener("click", () => show(index - 1));
+      next.addEventListener("click", () => show(index + 1));
+      document.addEventListener("keydown", (event) => {
+        const tag = event.target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        if (event.key === "ArrowRight" || event.key === "PageDown") {
+          event.preventDefault();
+          show(index + 1);
+        } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+          event.preventDefault();
+          show(index - 1);
+        } else if (event.key === "Home") show(0);
+        else if (event.key === "End") show(slides.length - 1);
+      });
+
+      const start = slides.findIndex((slide) => "#" + slide.id === location.hash);
+      show(start === -1 ? 0 : start);
+    </script>
+  </body>
+</html>
