@@ -105,7 +105,7 @@ npm start
 
 Abra [http://localhost:4200](http://localhost:4200). O `proxy.conf.json` manda `/api` para `http://localhost:3000`, então a API precisa estar no ar antes de usar o app.
 
-## Bônus: Nix (sem Docker)
+## Nix (sem Docker)
 
 O `server-api/shell.nix` entrega Node 22, Yarn, PostgreSQL 16 e as engines do Prisma usadas no NixOS, onde os binários oficiais do Prisma não existem.
 
