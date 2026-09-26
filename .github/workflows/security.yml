@@ -43,7 +43,7 @@ jobs:
 
       # Bloqueante: apenas CRITICAL/HIGH que já possuem correção publicada.
       - name: Trivy · dependências (bloqueante)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: ${{ matrix.app }}
@@ -56,7 +56,7 @@ jobs:
       # Informativo: relatório completo, todas as severidades, sempre publicado.
       - name: Trivy · relatório completo (informativo)
         if: always()
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: ${{ matrix.app }}
