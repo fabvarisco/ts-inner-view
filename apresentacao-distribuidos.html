@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inner View — Sistema distribuído</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Tokens iguais aos de apresentacao-esteira.html e apresentacao-testes.html */
+      :root {
+        --primary: #f54e00;
+        --primary-active: #d04200;
+        --ink: #26251e;
+        --body: #5a5852;
+        --muted: #807d72;
+        --muted-soft: #a09c92;
+        --hairline: #e6e5e0;
+        --hairline-strong: #cfcdc4;
+        --canvas: #f7f7f4;
+        --canvas-soft: #fafaf7;
+        --surface-card: #ffffff;
+        --surface-strong: #e6e5e0;
+        --on-primary: #ffffff;
+        --success: #1f8a65;
+        --error: #cf2d56;
+        --t-read: #9fbbe0;
+        --t-grep: #9fc9a2;
+        --t-think: #dfa88f;
+        --max: 1200px;
+        --nav: 64px;
+        --foot: 72px;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: Inter, system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      button { font-family: inherit; }
+
+      code, pre {
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      code {
+        background: var(--canvas-soft);
+        border: 1px solid var(--hairline);
+        border-radius: 4px;
+        padding: 1px 6px;
+      }
+
+      pre { margin: 0; white-space: pre-wrap; }
+      pre code { background: none; border: 0; padding: 0; }
+      .c { color: var(--muted); }
+      .k { color: var(--primary-active); }
+
+      .top-nav {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 2;
+        height: var(--nav);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        background: var(--canvas);
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .wordmark { margin: 0; color: var(--primary); font-size: 14px; font-weight: 500; }
+      .wordmark span { color: var(--muted); font-weight: 400; }
+      .counter { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--muted); }
+
+      .deck { height: 100%; }
+
+      .slide {
+        display: none;
+        height: 100%;
+        padding: calc(var(--nav) + 28px) 80px calc(var(--foot) + 20px);
+        overflow: auto;
+      }
+      .slide.is-active { display: block; }
+
+      .inner { max-width: var(--max); margin: 0 auto; }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 18ch;
+        font-size: clamp(40px, 5.2vw, 72px);
+        font-weight: 400;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+      }
+
+      h2 {
+        margin: 0 0 24px;
+        font-size: clamp(28px, 3vw, 36px);
+        font-weight: 400;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+
+      h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; line-height: 1.4; }
+
+      p { margin: 0; color: var(--body); }
+
+      .lede { max-width: 660px; margin-top: 20px; }
+      .closing { margin-top: 20px; max-width: 860px; color: var(--ink); }
+      .names { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 40px; color: var(--muted); font-size: 14px; }
+      .repo { margin-top: 12px; font-size: 13px; color: var(--muted); }
+      .note { margin-top: 16px; font-size: 14px; color: var(--muted); }
+
+      .grid { display: grid; gap: 16px; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
+      .split { grid-template-columns: 1.15fr 1fr; align-items: start; }
+
+      .card, .code-block, .table-wrap, .figure {
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+      }
+      .card { padding: 22px; }
+      .card p + p { margin-top: 8px; }
+      .card.small { padding: 18px; }
+      .card.small h3 { font-size: 16px; margin-bottom: 4px; }
+      .card.small p { font-size: 14px; }
+      .card.accent { border-color: var(--primary); }
+
+      .code-block { padding: 20px; color: var(--ink); overflow: auto; }
+      .figure { padding: 16px; }
+      .figure svg { display: block; width: 100%; height: auto; }
+
+      .kicker, .why {
+        margin: 0 0 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .why { color: var(--primary-active); margin-top: 12px; }
+      .ok { color: var(--success); }
+      .bad { color: var(--error); }
+
+      .file { margin: 0 0 8px; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink); }
+
+      .list { margin: 0; padding-left: 18px; color: var(--body); }
+      .list li + li { margin-top: 6px; }
+      .list strong { color: var(--ink); font-weight: 600; }
+
+      .pipe {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 8px;
+        margin: 0 0 16px;
+        padding: 0;
+        list-style: none;
+      }
+      .pipe li {
+        flex: 1 1 140px;
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--body);
+        position: relative;
+      }
+      .pipe li b { display: block; color: var(--ink); font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+      .pipe .side { font-size: 10px; letter-spacing: 0.88px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4; }
+      th, td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--hairline); color: var(--body); }
+      tr:last-child td { border-bottom: 0; }
+      th {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+        background: var(--canvas-soft);
+      }
+      td strong { color: var(--ink); font-weight: 600; }
+      tr.chosen td { background: #fff5ef; }
+      .table-wrap { overflow: auto; }
+
+      .refs { margin: 0; padding-left: 22px; color: var(--body); font-size: 14px; }
+      .refs li + li { margin-top: 10px; }
+
+      .nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        height: var(--foot);
+        display: grid;
+        grid-template-columns: 220px 1fr auto;
+        align-items: center;
+        gap: 16px;
+        padding: 0 32px;
+        background: var(--canvas);
+        border-top: 1px solid var(--hairline);
+      }
+      .hint { font-size: 13px; color: var(--muted); }
+      .kbd {
+        display: inline-block;
+        min-width: 22px;
+        padding: 2px 6px;
+        border: 1px solid var(--hairline-strong);
+        border-radius: 4px;
+        background: var(--surface-card);
+        font-size: 12px;
+        font-weight: 500;
+        text-align: center;
+        color: var(--ink);
+      }
+      .pager { display: flex; justify-content: center; gap: 8px; }
+      .pager button {
+        width: 8px;
+        height: 8px;
+        padding: 0;
+        border: 0;
+        border-radius: 9999px;
+        background: var(--hairline-strong);
+        cursor: pointer;
+      }
+      .pager button.is-on { background: var(--ink); }
+      .actions { display: flex; gap: 8px; }
+      .btn {
+        height: 40px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .btn-secondary { background: var(--surface-card); color: var(--ink); border: 1px solid var(--hairline-strong); }
+      .btn-primary { background: var(--primary); color: var(--on-primary); border: 0; }
+      .btn-primary:hover, .btn-primary:focus-visible { background: var(--primary-active); }
+      .btn:disabled { color: var(--muted-soft); background: var(--surface-strong); border-color: transparent; cursor: default; }
+      .btn-primary:disabled { color: var(--on-primary); background: var(--muted-soft); }
+
+      /* SVG */
+      .svg-box { fill: var(--surface-card); stroke: var(--hairline-strong); }
+      .svg-box-hi { fill: #fff5ef; stroke: var(--primary); }
+      .svg-t { font: 600 13px Inter, sans-serif; fill: var(--ink); }
+      .svg-s { font: 400 11px "JetBrains Mono", monospace; fill: var(--muted); }
+      .svg-l { stroke: var(--hairline-strong); stroke-width: 1.5; fill: none; }
+      .svg-a { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+      .svg-ok { stroke: var(--success); stroke-width: 1.5; fill: none; }
+      .svg-bad { stroke: var(--error); stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+      .svg-m { font: 400 11px "JetBrains Mono", monospace; fill: var(--body); }
+
+      @media (max-width: 1024px) {
+        .slide { padding-left: 32px; padding-right: 32px; }
+        .grid-4 { grid-template-columns: 1fr 1fr; }
+        .split { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 720px) {
+        h1 { font-size: 32px; letter-spacing: -0.02em; }
+        .slide { padding-left: 16px; padding-right: 16px; }
+        .top-nav, .nav { padding-left: 16px; padding-right: 16px; }
+        .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        .hint { display: none; }
+        .nav { grid-template-columns: 1fr auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top-nav">
+      <p class="wordmark">Inner View <span>· Sistema distribuído</span></p>
+      <div class="counter" data-count>01 / 12</div>
+    </header>
+
+    <main class="deck">
+      <!-- 1. Capa -->
+      <section class="slide is-active" id="capa">
+        <div class="inner">
+          <p class="eyebrow">Sistemas Distribuídos · Caso de ensino · Novembro 2026</p>
+          <h1>O Inner View como sistema distribuído</h1>
+          <p class="lede">
+            Neste deck estão a especificação do sistema, com a justificativa de
+            cada escolha, e a funcionalidade escolhida para implementar: a edição
+            de um tour virtual com exclusão mútua entre réplicas da API.
+          </p>
+          <p class="names">
+            <span>Fabricio Varisco</span>
+            <span>Gustavo Potrich</span>
+            <span>Lucas Krug</span>
+            <span>Matheus Thiesen</span>
+          </p>
+          <p class="repo">github.com/fabvarisco/ts-inner-view</p>
+        </div>
+      </section>
+
+      <!-- 2. A tarefa -->
+      <section class="slide" id="tarefa">
+        <div class="inner">
+          <p class="eyebrow">O que a atividade pede · peso 60%</p>
+          <h2>Especificar, implementar, justificar</h2>
+          <div class="grid grid-2">
+            <article class="card">
+              <p class="kicker">Objetivo 1</p>
+              <h3>Especificação do sistema distribuído</h3>
+              <ul class="list">
+                <li>Questões de projeto aplicadas ao caso</li>
+                <li>Arquitetura (cliente-servidor ou P2P)</li>
+                <li>Marshaling e unmarshaling dos dados</li>
+                <li>Paradigma de comunicação</li>
+                <li>Exclusão mútua para regiões críticas</li>
+              </ul>
+            </article>
+            <article class="card">
+              <p class="kicker">Objetivo 2</p>
+              <h3>Uma funcionalidade simples</h3>
+              <p>
+                A funcionalidade é implementada conforme o que foi especificado no
+                item 1. Toda escolha, na especificação e no código, vem com a sua justificativa.
+              </p>
+              <p class="why">Nossa escolha</p>
+              <p>Edição do tour virtual com lock distribuído.</p>
+            </article>
+          </div>
+          <div class="grid grid-3" style="margin-top: 16px">
+            <article class="card small">
+              <p class="kicker">Entrega</p>
+              <h3>Relatório SBC</h3>
+              <p>PDF de no máximo 4 páginas no template SBC, com a lista de referências.</p>
+            </article>
+            <article class="card small">
+              <p class="kicker">Entrega</p>
+              <h3>Código-fonte</h3>
+              <p>Comentado, bem indentado e funcionando.</p>
+            </article>
+            <article class="card small">
+              <p class="kicker">Entrega</p>
+              <h3>Vídeo de até 5 min</h3>
+              <p>Mostra a funcionalidade em execução e explica o que está acontecendo.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Caso de ensino -->
+      <section class="slide" id="caso">
+        <div class="inner">
+          <p class="eyebrow">Caso de ensino</p>
+          <h2>Tour virtual de imóveis</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <p class="kicker">Corretor e admin</p>
+              <h3>Montam o tour</h3>
+              <p>Cadastram o imóvel, enviam um panorama 360° por cômodo e ligam os cômodos com hotspots.</p>
+            </article>
+            <article class="card">
+              <p class="kicker">Visitante</p>
+              <h3>Percorre o imóvel</h3>
+              <p>Abre o link compartilhado e anda pela casa sem ir até lá. Cada visita é gravada como visualização.</p>
+            </article>
+            <article class="card">
+              <p class="kicker">Imobiliária</p>
+              <h3>Dona dos dados</h3>
+              <p>Cada usuário pertence a uma imobiliária. A API filtra todo acesso pelo <code>agencyId</code> do token.</p>
+            </article>
+          </div>
+          <div class="grid grid-4" style="margin-top: 16px">
+            <article class="card small">
+              <p class="file">inner-view-client</p>
+              <h3>Ionic + Angular</h3>
+              <p>Porta 4200. Visualizador 360° com Three.js.</p>
+            </article>
+            <article class="card small">
+              <p class="file">proxy.conf.json</p>
+              <h3>Proxy /api</h3>
+              <p>Repassa <code>/api</code> para <code>localhost:3000</code>.</p>
+            </article>
+            <article class="card small">
+              <p class="file">server-api</p>
+              <h3>NestJS + Prisma</h3>
+              <p>Porta 3000. Swagger em <code>/docs</code>.</p>
+            </article>
+            <article class="card small">
+              <p class="file">docker-compose.yml</p>
+              <h3>PostgreSQL 16</h3>
+              <p>Porta 5432, com healthcheck antes da API subir.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Questões de projeto -->
+      <section class="slide" id="questoes">
+        <div class="inner">
+          <p class="eyebrow">Item 1 · Questões de projeto (Coulouris et al.)</p>
+          <h2>Cada desafio, aplicado ao Inner View</h2>
+          <div class="grid grid-4">
+            <article class="card small">
+              <h3>Heterogeneidade</h3>
+              <p>Navegador, app Ionic e Node trocam HTTP com JSON. Nenhum dos lados depende da linguagem ou do sistema operacional do outro.</p>
+            </article>
+            <article class="card small">
+              <h3>Abertura</h3>
+              <p>A interface REST está publicada no Swagger (<code>/docs</code>), e qualquer cliente novo consegue integrar a partir dela.</p>
+            </article>
+            <article class="card small">
+              <h3>Segurança</h3>
+              <p>JWT de acesso (1 dia) e de refresh (7 dias), guards por papel e Zod validando toda entrada. Em produção, tudo passa por HTTPS.</p>
+            </article>
+            <article class="card small">
+              <h3>Escalabilidade</h3>
+              <p>A API não guarda sessão, então é possível subir N réplicas atrás de um balanceador. O estado fica todo no PostgreSQL.</p>
+            </article>
+            <article class="card small">
+              <h3>Tratamento de falhas</h3>
+              <p>Healthcheck do banco, <code>restart: unless-stopped</code> e transações: se uma escrita falha no meio, nada fica pela metade.</p>
+            </article>
+            <article class="card small accent">
+              <h3>Concorrência</h3>
+              <p>Dois corretores podem editar o mesmo tour ao mesmo tempo. Essa é a região crítica que o lock distribuído protege.</p>
+            </article>
+            <article class="card small">
+              <h3>Transparência</h3>
+              <p>O proxy <code>/api</code> esconde onde a API roda (localização), e o balanceador esconde quantas réplicas existem (replicação).</p>
+            </article>
+            <article class="card small">
+              <h3>Qualidade de serviço</h3>
+              <p>Os panoramas viajam em base64. O limite do corpo JSON foi ampliado para 50 MB em <code>main.ts</code>.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Arquitetura -->
+      <section class="slide" id="arquitetura">
+        <div class="inner">
+          <p class="eyebrow">Item 1 · Arquitetura</p>
+          <h2>Cliente-servidor em três camadas</h2>
+          <div class="grid split">
+            <div class="figure">
+              <svg viewBox="0 0 560 300" role="img" aria-label="Clientes chamam o balanceador, que distribui entre réplicas da API, que acessam um PostgreSQL">
+                <defs>
+                  <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0 L10,5 L0,10 z" fill="#26251e" />
+                  </marker>
+                </defs>
+                <!-- clientes -->
+                <rect class="svg-box" x="10" y="40" width="130" height="50" rx="8" />
+                <text class="svg-t" x="75" y="62" text-anchor="middle">Corretor</text>
+                <text class="svg-s" x="75" y="78" text-anchor="middle">Ionic / Angular</text>
+                <rect class="svg-box" x="10" y="125" width="130" height="50" rx="8" />
+                <text class="svg-t" x="75" y="147" text-anchor="middle">Admin</text>
+                <text class="svg-s" x="75" y="163" text-anchor="middle">Ionic / Angular</text>
+                <rect class="svg-box" x="10" y="210" width="130" height="50" rx="8" />
+                <text class="svg-t" x="75" y="232" text-anchor="middle">Visitante</text>
+                <text class="svg-s" x="75" y="248" text-anchor="middle">navegador</text>
+                <!-- balanceador -->
+                <rect class="svg-box" x="190" y="115" width="110" height="70" rx="8" />
+                <text class="svg-t" x="245" y="143" text-anchor="middle">Proxy /</text>
+                <text class="svg-t" x="245" y="160" text-anchor="middle">balanceador</text>
+                <!-- réplicas -->
+                <rect class="svg-box-hi" x="345" y="60" width="100" height="50" rx="8" />
+                <text class="svg-t" x="395" y="82" text-anchor="middle">API #1</text>
+                <text class="svg-s" x="395" y="98" text-anchor="middle">NestJS :3000</text>
+                <rect class="svg-box-hi" x="345" y="190" width="100" height="50" rx="8" />
+                <text class="svg-t" x="395" y="212" text-anchor="middle">API #2</text>
+                <text class="svg-s" x="395" y="228" text-anchor="middle">NestJS :3000</text>
+                <!-- banco -->
+                <rect class="svg-box" x="470" y="115" width="80" height="70" rx="8" />
+                <text class="svg-t" x="510" y="143" text-anchor="middle">Postgres</text>
+                <text class="svg-s" x="510" y="160" text-anchor="middle">:5432</text>
+                <!-- ligações -->
+                <path class="svg-a" d="M140 65 L190 135" marker-end="url(#ar)" />
+                <path class="svg-a" d="M140 150 L190 150" marker-end="url(#ar)" />
+                <path class="svg-a" d="M140 235 L190 165" marker-end="url(#ar)" />
+                <path class="svg-a" d="M300 140 L345 90" marker-end="url(#ar)" />
+                <path class="svg-a" d="M300 160 L345 210" marker-end="url(#ar)" />
+                <path class="svg-a" d="M445 85 L470 135" marker-end="url(#ar)" />
+                <path class="svg-a" d="M445 215 L470 165" marker-end="url(#ar)" />
+                <text class="svg-m" x="120" y="290">HTTP + JSON</text>
+                <text class="svg-m" x="380" y="290">SQL (Prisma)</text>
+                <text class="svg-m" x="10" y="20">camada 1 · apresentação</text>
+                <text class="svg-m" x="300" y="20">camada 2 · lógica</text>
+                <text class="svg-m" x="455" y="45">camada 3</text>
+              </svg>
+            </div>
+            <div>
+              <article class="card">
+                <p class="kicker">Por que cliente-servidor</p>
+                <ul class="list">
+                  <li><strong>Uma fonte de verdade.</strong> O tour, os panoramas e os hotspots de cada imobiliária precisam estar consistentes para todos os visitantes.</li>
+                  <li><strong>Autorização central.</strong> Só o servidor confere o JWT e o <code>agencyId</code>. Num P2P, cada par teria que confiar nos outros.</li>
+                  <li><strong>Clientes efêmeros.</strong> O visitante abre o link, navega e fecha. Não há pares estáveis para guardar nem repassar os dados.</li>
+                  <li><strong>Escala horizontal simples.</strong> A API é stateless, então basta adicionar réplicas.</li>
+                </ul>
+                <p class="why">Por que não peer-to-peer</p>
+                <p>O P2P compensa quando os recursos estão espalhados entre os usuários. Aqui, eles pertencem à imobiliária.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Marshaling -->
+      <section class="slide" id="marshaling">
+        <div class="inner">
+          <p class="eyebrow">Item 1 · Empacotamento e desempacotamento</p>
+          <h2>JSON sobre HTTP, com o NestJS como broker</h2>
+          <ul class="pipe">
+            <li><span class="side">cliente</span><b>Objeto TS</b>DTO do formulário</li>
+            <li><span class="side">marshaling</span><b>HttpClient</b><code>JSON.stringify</code> + headers</li>
+            <li><span class="side">rede</span><b>HTTP</b><code>PATCH /virtual-tours/:id</code></li>
+            <li><span class="side">unmarshaling</span><b>body-parser</b>Express, limite de 50 MB</li>
+            <li><span class="side">validação</span><b>ZodValidationPipe</b>tipagem e 400 se inválido</li>
+            <li><span class="side">servidor</span><b>Service</b>DTO tipado → Prisma</li>
+          </ul>
+          <div class="grid grid-2">
+            <article class="card">
+              <p class="kicker">Padrão Broker (Microsoft p&amp;p)</p>
+              <h3>O cliente não conhece quem atende</h3>
+              <p>
+                O NestJS funciona como o middleware do broker. Ele recebe a requisição,
+                localiza o controller pela rota, aplica guards e pipes e chama o service.
+                Do lado do cliente, o <code>HttpClient</code> do Angular é o proxy:
+                esconde a serialização e o transporte.
+              </p>
+            </article>
+            <article class="card">
+              <p class="kicker">Por que JSON</p>
+              <ul class="list">
+                <li><strong>Nativo nos dois lados.</strong> TypeScript no cliente e no servidor, sem gerar stubs.</li>
+                <li><strong>Legível e documentado.</strong> O Swagger mostra o formato exato e dá para testar com <code>curl</code>.</li>
+                <li><strong>Validação explícita.</strong> O Zod garante o tipo na chegada, coisa que o JSON sozinho não faz.</li>
+              </ul>
+              <p class="why">Por que não Protobuf / gRPC</p>
+              <p>Ganharíamos alguns bytes, mas o navegador perderia o suporte direto e o contrato deixaria de ser legível. Nessa escala, a conta não fecha.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Paradigma -->
+      <section class="slide" id="paradigma">
+        <div class="inner">
+          <p class="eyebrow">Item 1 · Paradigma de comunicação</p>
+          <h2>Invocação remota por requisição-resposta</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Paradigma</th><th>Como seria no Inner View</th><th>Decisão</th></tr>
+              </thead>
+              <tbody>
+                <tr class="chosen">
+                  <td><strong>Requisição-resposta (REST/HTTP)</strong></td>
+                  <td>O cliente envia a operação e espera o resultado: criar o tour, editar um panorama, listar imóveis.</td>
+                  <td><strong class="ok">Adotado.</strong> Toda operação do corretor precisa de confirmação imediata (200, 400, 409). O HTTP é stateless e passa por proxy e balanceador sem esforço.</td>
+                </tr>
+                <tr>
+                  <td><strong>RPC / RMI</strong></td>
+                  <td>Stubs gerados (gRPC, Java RMI) chamando métodos remotos.</td>
+                  <td>Não. O navegador não fala gRPC nativo, e o RMI amarra tudo ao Java. O REST já entrega a mesma semântica.</td>
+                </tr>
+                <tr>
+                  <td><strong>Publicação-assinatura</strong></td>
+                  <td>Cada visualização do tour vira um evento, e a analytics assina.</td>
+                  <td>Evolução futura. Hoje o volume é baixo e a gravação síncrona dá conta.</td>
+                </tr>
+                <tr>
+                  <td><strong>Fila de mensagens</strong></td>
+                  <td>Processar os panoramas grandes (gerar miniatura) fora da requisição.</td>
+                  <td>Evolução futura, se o upload passar a demorar.</td>
+                </tr>
+                <tr>
+                  <td><strong>Comunicação em grupo / memória compartilhada</strong></td>
+                  <td>Réplicas sincronizando estado entre si.</td>
+                  <td>Não. As réplicas não guardam estado, e o PostgreSQL faz o papel de memória compartilhada.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. Exclusão mútua: problema -->
+      <section class="slide" id="problema">
+        <div class="inner">
+          <p class="eyebrow">Item 1 · Exclusão mútua · o problema</p>
+          <h2>Dois corretores, o mesmo tour, duas réplicas</h2>
+          <div class="grid split">
+            <div class="figure">
+              <svg viewBox="0 0 520 280" role="img" aria-label="Sem lock, duas escritas concorrentes no mesmo tour: a segunda sobrescreve a primeira">
+                <defs>
+                  <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0 L10,5 L0,10 z" fill="#26251e" />
+                  </marker>
+                </defs>
+                <text class="svg-t" x="60" y="22" text-anchor="middle">Corretor A</text>
+                <text class="svg-t" x="200" y="22" text-anchor="middle">API #1</text>
+                <text class="svg-t" x="320" y="22" text-anchor="middle">API #2</text>
+                <text class="svg-t" x="460" y="22" text-anchor="middle">Corretor B</text>
+                <line class="svg-l" x1="60" y1="32" x2="60" y2="270" />
+                <line class="svg-l" x1="200" y1="32" x2="200" y2="270" />
+                <line class="svg-l" x1="320" y1="32" x2="320" y2="270" />
+                <line class="svg-l" x1="460" y1="32" x2="460" y2="270" />
+                <path class="svg-a" d="M60 60 L200 60" marker-end="url(#ar2)" />
+                <text class="svg-m" x="68" y="54">PATCH tour (cozinha)</text>
+                <path class="svg-a" d="M460 80 L320 80" marker-end="url(#ar2)" />
+                <text class="svg-m" x="340" y="74">PATCH tour (sala)</text>
+                <text class="svg-m" x="208" y="120">lê estado v1</text>
+                <text class="svg-m" x="250" y="140">lê estado v1</text>
+                <text class="svg-m" x="208" y="180">grava v2a</text>
+                <text class="svg-m" x="250" y="210">grava v2b</text>
+                <rect x="140" y="230" width="240" height="30" rx="6" fill="#fdecef" stroke="#cf2d56" />
+                <text class="svg-m" x="260" y="250" text-anchor="middle" style="fill:#cf2d56">v2a perdida · hotspot órfão</text>
+              </svg>
+            </div>
+            <article class="card">
+              <p class="kicker">Região crítica</p>
+              <h3>A atualização do tour e dos seus panoramas</h3>
+              <ul class="list">
+                <li><strong>Atualização perdida.</strong> As duas réplicas leem o mesmo estado, e a última escrita apaga a anterior.</li>
+                <li><strong>Inconsistência.</strong> Um corretor apaga o panorama da cozinha enquanto o outro cria um hotspot que aponta para ele.</li>
+                <li><strong>Lock em memória não resolve.</strong> Um <code>mutex</code> no Node só vale dentro de um processo, e a réplica #2 não fica sabendo dele.</li>
+              </ul>
+              <p class="why">Requisitos (Coulouris, cap. 15)</p>
+              <p><strong>EM1 segurança:</strong> no máximo um processo por vez na região. <strong>EM2 vivacidade:</strong> todo pedido acaba sendo atendido ou recusado. Não pode haver deadlock nem lock órfão.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. Exclusão mútua: solução -->
+      <section class="slide" id="solucao">
+        <div class="inner">
+          <p class="eyebrow">Item 1 · Exclusão mútua · a solução</p>
+          <h2>Servidor central: o PostgreSQL coordena o lock</h2>
+          <div class="grid split">
+            <div class="figure">
+              <svg viewBox="0 0 520 290" role="img" aria-label="API 1 obtém o advisory lock; API 2 tenta, não obtém e devolve 409">
+                <defs>
+                  <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0 L10,5 L0,10 z" fill="#26251e" />
+                  </marker>
+                </defs>
+                <text class="svg-t" x="70" y="22" text-anchor="middle">API #1</text>
+                <text class="svg-t" x="260" y="22" text-anchor="middle">PostgreSQL</text>
+                <text class="svg-t" x="450" y="22" text-anchor="middle">API #2</text>
+                <line class="svg-l" x1="70" y1="32" x2="70" y2="280" />
+                <line class="svg-l" x1="260" y1="32" x2="260" y2="280" />
+                <line class="svg-l" x1="450" y1="32" x2="450" y2="280" />
+                <path class="svg-a" d="M70 55 L260 55" marker-end="url(#ar3)" />
+                <text class="svg-m" x="78" y="49">BEGIN; try_lock(tour)</text>
+                <path class="svg-ok" d="M260 75 L70 75" marker-end="url(#ar3)" />
+                <text class="svg-m" x="150" y="90" style="fill:#1f8a65">true</text>
+                <rect x="60" y="100" width="20" height="110" fill="#fff5ef" stroke="#f54e00" />
+                <text class="svg-m" x="88" y="160">região crítica</text>
+                <path class="svg-a" d="M450 120 L260 120" marker-end="url(#ar3)" />
+                <text class="svg-m" x="290" y="114">BEGIN; try_lock(tour)</text>
+                <path class="svg-bad" d="M260 140 L450 140" marker-end="url(#ar3)" />
+                <text class="svg-m" x="340" y="155" style="fill:#cf2d56">false → 409</text>
+                <path class="svg-a" d="M70 230 L260 230" marker-end="url(#ar3)" />
+                <text class="svg-m" x="78" y="224">UPDATE …; COMMIT</text>
+                <text class="svg-m" x="268" y="255">lock liberado no COMMIT</text>
+              </svg>
+            </div>
+            <article class="card">
+              <p class="kicker">Algoritmo</p>
+              <h3><code>pg_try_advisory_xact_lock</code></h3>
+              <p>
+                Cada tour vira uma chave inteira (<code>hashtext(tourId)</code>). A réplica
+                abre uma transação e pede o lock ao banco. Quem consegue edita. Quem não
+                consegue recebe <code>409 Conflict</code> e tenta de novo depois.
+              </p>
+              <ul class="list" style="margin-top: 12px">
+                <li><strong>Segurança.</strong> O banco é o único coordenador, então nunca há dois donos ao mesmo tempo.</li>
+                <li><strong>Sem lock órfão.</strong> O lock pertence à transação. Se a réplica cai, a conexão fecha e o banco libera o lock.</li>
+                <li><strong>Sem deadlock.</strong> O <em>try</em> não bloqueia: responde na hora.</li>
+                <li><strong>Granular.</strong> Um lock por tour, então edições em tours diferentes seguem em paralelo.</li>
+              </ul>
+              <p class="why">Por que não Ricart-Agrawala ou anel</p>
+              <p>Os dois exigem que as réplicas se conheçam e troquem mensagens entre si. As nossas sobem e caem a todo momento e já compartilham o PostgreSQL, que é o coordenador natural. O ponto único de falha já existe, porque sem banco não há edição de qualquer forma.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. Implementação -->
+      <section class="slide" id="implementacao">
+        <div class="inner">
+          <p class="eyebrow">Item 2 · Implementação</p>
+          <h2>O lock dentro do caso de uso</h2>
+          <div class="grid split">
+            <div class="code-block">
+              <p class="file">server-api/src/modules/virtual-tours/services/update-virtual-tour.service.ts</p>
+<pre><code><span class="k">async</span> execute(id, dto, currentUser) {
+  <span class="c">// Região crítica: tudo dentro de uma transação.</span>
+  <span class="k">return</span> <span class="k">this</span>.prisma.$transaction(<span class="k">async</span> (tx) =&gt; {
+    <span class="c">// Pede o lock ao PostgreSQL (coordenador central).</span>
+    <span class="c">// Não bloqueia: devolve true/false na hora.</span>
+    <span class="k">const</span> [{ locked }] = <span class="k">await</span> tx.$queryRaw`
+      SELECT pg_try_advisory_xact_lock(hashtext(${id})) AS locked`;
+
+    <span class="c">// Outra réplica está editando este tour.</span>
+    <span class="k">if</span> (!locked) <span class="k">throw new</span> ConflictException(
+      <span class="k">'Tour em edição por outro usuário'</span>);
+
+    <span class="k">const</span> tour = <span class="k">await</span> tx.virtualTour.findFirst({
+      where: { id, property: { agencyId: currentUser.agencyId } },
+    });
+    <span class="k">if</span> (!tour) <span class="k">throw new</span> NotFoundException(<span class="k">'Virtual tour not found'</span>);
+
+    <span class="k">return</span> tx.virtualTour.update({ where: { id }, data: dto });
+  }); <span class="c">// COMMIT ou ROLLBACK liberam o lock</span>
+}</code></pre>
+            </div>
+            <div class="grid">
+              <article class="card small">
+                <p class="kicker">Onde entra</p>
+                <h3>No service, não no controller</h3>
+                <p>O controller continua só repassando a chamada. O lock é regra do caso de uso e pode ser testado com o dublê do Prisma, como o resto da suíte.</p>
+              </article>
+              <article class="card small">
+                <p class="kicker">Contrato HTTP</p>
+                <h3><code>PATCH /virtual-tours/:id</code></h3>
+                <p><span class="ok">200</span> editou · <span class="bad">409</span> outro corretor está editando · 404 não é da sua imobiliária · 400 corpo inválido (Zod).</p>
+              </article>
+              <article class="card small">
+                <p class="kicker">Por que xact e não session lock</p>
+                <h3>A liberação é automática</h3>
+                <p>O Prisma usa um pool de conexões. Um lock de sessão poderia ficar preso numa conexão reaproveitada. O de transação morre com o COMMIT.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11. Demonstração -->
+      <section class="slide" id="demo">
+        <div class="inner">
+          <p class="eyebrow">Vídeo · roteiro da demonstração</p>
+          <h2>Duas réplicas, duas requisições, um vencedor</h2>
+          <div class="grid grid-2">
+            <div class="code-block">
+              <p class="file">terminal</p>
+<pre><code><span class="c"># 1. banco + réplica #1 (:3000) no Docker,</span>
+<span class="c">#    réplica #2 (:3001) no host, mesmo banco</span>
+docker compose up -d
+PORT=3001 yarn start:dev &amp;
+
+<span class="c"># 2. login do corretor (seed)</span>
+TOKEN=$(curl -s -X POST localhost:3000/auth/signin \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"corretor@relaxinn.com.br","password":"corretor123"}' \
+  | jq -r .accessToken)
+
+<span class="c"># 3. edições simultâneas, uma em cada réplica</span>
+for p in 3000 3001; do
+  curl -s -o /dev/null -w "$p → %{http_code}\n" -X PATCH \
+    localhost:$p/virtual-tours/$TOUR \
+    -H "Authorization: Bearer $TOKEN" \
+    -H 'Content-Type: application/json' \
+    -d '{"status":"PUBLISHED"}' &
+done; wait</code></pre>
+            </div>
+            <div class="grid">
+              <article class="card small">
+                <p class="kicker">Resultado esperado</p>
+                <h3><span class="ok">200</span> e <span class="bad">409</span></h3>
+                <p>Uma requisição entra na região crítica. A outra é recusada enquanto o lock está com a primeira.</p>
+              </article>
+              <article class="card small">
+                <p class="kicker">Para o vídeo enxergar</p>
+                <h3>Segurar o lock por 3 s</h3>
+                <p>Na demonstração, um <code>pg_sleep(3)</code> dentro da transação deixa a janela de concorrência visível. Ele sai antes do merge.</p>
+              </article>
+              <article class="card small">
+                <p class="kicker">Conferir no banco</p>
+                <h3><code>pg_locks</code></h3>
+                <p><code>SELECT * FROM pg_locks WHERE locktype = 'advisory';</code> mostra o dono do lock durante a edição.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 12. Referências -->
+      <section class="slide" id="referencias">
+        <div class="inner">
+          <p class="eyebrow">Referências</p>
+          <h2>De onde vêm as escolhas</h2>
+          <ol class="refs">
+            <li>COULOURIS, G.; DOLLIMORE, J.; KINDBERG, T.; BLAIR, G. <em>Sistemas Distribuídos: Conceitos e Projeto</em>. 5. ed. Porto Alegre: Bookman, 2013. Caps. 1, 2, 4, 5, 6 e 15.</li>
+            <li>TANENBAUM, A. S.; VAN STEEN, M. <em>Distributed Systems</em>. 3. ed. Maarten van Steen, 2017.</li>
+            <li>MICROSOFT. Broker. <em>Microsoft Patterns &amp; Practices</em>. Disponível em: docs.microsoft.com/en-us/previous-versions/msp-n-p/ff648096(v=pandp.10).</li>
+            <li>POSTGRESQL GLOBAL DEVELOPMENT GROUP. Advisory Locks e Advisory Lock Functions. <em>PostgreSQL 16 Documentation</em>, seções 13.3.5 e 9.27.10.</li>
+            <li>NESTJS. Pipes, Guards e Controllers. <em>NestJS Documentation</em>. Disponível em: docs.nestjs.com.</li>
+            <li>FIELDING, R. T. <em>Architectural Styles and the Design of Network-based Software Architectures</em>. Tese (Doutorado), University of California, Irvine, 2000.</li>
+          </ol>
+          <p class="closing">
+            Próximos passos: implementar o lock no service com o teste de aceitação
+            do 409, gravar o vídeo e fechar o relatório no template SBC.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="nav">
+      <div class="hint">
+        <span class="kbd">←</span>
+        <span class="kbd">→</span>
+        setas para navegar
+      </div>
+      <div class="pager" data-pager></div>
+      <div class="actions">
+        <button class="btn btn-secondary" type="button" data-prev>Anterior</button>
+        <button class="btn btn-primary" type="button" data-next>Próximo</button>
+      </div>
+    </footer>
+
+    <script>
+      // Navegação do deck: setas, PageUp/PageDown, Home/End, pager e #hash.
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const count = document.querySelector("[data-count]");
+      const pager = document.querySelector("[data-pager]");
+      const prev = document.querySelector("[data-prev]");
+      const next = document.querySelector("[data-next]");
+      let index = 0;
+
+      slides.forEach((_, i) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("aria-label", "Slide " + (i + 1));
+        button.addEventListener("click", () => show(i));
+        pager.appendChild(button);
+      });
+
+      function show(i) {
+        index = Math.max(0, Math.min(slides.length - 1, i));
+        slides.forEach((slide, n) => slide.classList.toggle("is-active", n === index));
+        pager.querySelectorAll("button").forEach((button, n) => button.classList.toggle("is-on", n === index));
+        count.textContent = String(index + 1).padStart(2, "0") + " / " + String(slides.length).padStart(2, "0");
+        prev.disabled = index === 0;
+        next.disabled = index === slides.length - 1;
+        next.textContent = index === slides.length - 1 ? "Fim" : "Próximo";
+        const active = document.querySelector(".slide.is-active");
+        if (active) active.scrollTop = 0;
+        if (location.hash !== "#" + slides[index].id) {
+          history.replaceState(null, "", "#" + slides[index].id);
+        }
+      }
+
+      prev.addEventListener("click", () => show(index - 1));
+      next.addEventListener("click", () => show(index + 1));
+      document.addEventListener("keydown", (event) => {
+        const tag = event.target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        if (event.key === "ArrowRight" || event.key === "PageDown") {
+          event.preventDefault();
+          show(index + 1);
+        } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+          event.preventDefault();
+          show(index - 1);
+        } else if (event.key === "Home") show(0);
+        else if (event.key === "End") show(slides.length - 1);
+      });
+
+      const start = slides.findIndex((slide) => "#" + slide.id === location.hash);
+      show(start === -1 ? 0 : start);
+    </script>
+  </body>
+</html>
