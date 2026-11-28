@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inner View — Serviços web (Coulouris cap. 9)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Tokens iguais aos de apresentacao-esteira.html e apresentacao-testes.html */
+      :root {
+        --primary: #f54e00;
+        --primary-active: #d04200;
+        --ink: #26251e;
+        --body: #5a5852;
+        --muted: #807d72;
+        --muted-soft: #a09c92;
+        --hairline: #e6e5e0;
+        --hairline-strong: #cfcdc4;
+        --canvas: #f7f7f4;
+        --canvas-soft: #fafaf7;
+        --surface-card: #ffffff;
+        --surface-strong: #e6e5e0;
+        --on-primary: #ffffff;
+        --success: #1f8a65;
+        --error: #cf2d56;
+        --t-read: #9fbbe0;
+        --t-grep: #9fc9a2;
+        --t-think: #dfa88f;
+        --max: 1200px;
+        --nav: 64px;
+        --foot: 72px;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: Inter, system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      button { font-family: inherit; }
+
+      code, pre {
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      code {
+        background: var(--canvas-soft);
+        border: 1px solid var(--hairline);
+        border-radius: 4px;
+        padding: 1px 6px;
+      }
+
+      pre { margin: 0; white-space: pre-wrap; }
+      pre code { background: none; border: 0; padding: 0; }
+      .c { color: var(--muted); }
+      .k { color: var(--primary-active); }
+
+      .top-nav {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 2;
+        height: var(--nav);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        background: var(--canvas);
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .wordmark { margin: 0; color: var(--primary); font-size: 14px; font-weight: 500; }
+      .wordmark span { color: var(--muted); font-weight: 400; }
+      .counter { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--muted); }
+
+      .deck { height: 100%; }
+
+      .slide {
+        display: none;
+        height: 100%;
+        padding: calc(var(--nav) + 28px) 80px calc(var(--foot) + 20px);
+        overflow: auto;
+      }
+      .slide.is-active { display: block; }
+
+      .inner { max-width: var(--max); margin: 0 auto; }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 18ch;
+        font-size: clamp(40px, 5.2vw, 72px);
+        font-weight: 400;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+      }
+
+      h2 {
+        margin: 0 0 24px;
+        font-size: clamp(28px, 3vw, 36px);
+        font-weight: 400;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+
+      h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; line-height: 1.4; }
+
+      p { margin: 0; color: var(--body); }
+
+      .lede { max-width: 660px; margin-top: 20px; }
+      .closing { margin-top: 20px; max-width: 860px; color: var(--ink); }
+      .names { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 40px; color: var(--muted); font-size: 14px; }
+      .repo { margin-top: 12px; font-size: 13px; color: var(--muted); }
+      .note { margin-top: 16px; font-size: 14px; color: var(--muted); }
+
+      .grid { display: grid; gap: 16px; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
+      .split { grid-template-columns: 1.15fr 1fr; align-items: start; }
+
+      .card, .code-block, .table-wrap, .figure {
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+      }
+      .card { padding: 22px; }
+      .card p + p { margin-top: 8px; }
+      .card.small { padding: 18px; }
+      .card.small h3 { font-size: 16px; margin-bottom: 4px; }
+      .card.small p { font-size: 14px; }
+      .card.accent { border-color: var(--primary); }
+
+      .code-block { padding: 20px; color: var(--ink); overflow: auto; }
+      .figure { padding: 16px; }
+      .figure svg { display: block; width: 100%; height: auto; }
+
+      .kicker, .why {
+        margin: 0 0 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .why { color: var(--primary-active); margin-top: 12px; }
+      .ok { color: var(--success); }
+      .bad { color: var(--error); }
+
+      .file { margin: 0 0 8px; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink); }
+
+      .list { margin: 0; padding-left: 18px; color: var(--body); }
+      .list li + li { margin-top: 6px; }
+      .list strong { color: var(--ink); font-weight: 600; }
+
+      .pipe {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 8px;
+        margin: 0 0 16px;
+        padding: 0;
+        list-style: none;
+      }
+      .pipe li {
+        flex: 1 1 140px;
+        background: var(--surface-card);
+        border: 1px solid var(--hairline);
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--body);
+        position: relative;
+      }
+      .pipe li b { display: block; color: var(--ink); font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+      .pipe .side { font-size: 10px; letter-spacing: 0.88px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4; }
+      th, td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--hairline); color: var(--body); }
+      tr:last-child td { border-bottom: 0; }
+      th {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+        text-transform: uppercase;
+        color: var(--muted);
+        background: var(--canvas-soft);
+      }
+      td strong { color: var(--ink); font-weight: 600; }
+      tr.chosen td { background: #fff5ef; }
+      .table-wrap { overflow: auto; }
+
+      .refs { margin: 0; padding-left: 22px; color: var(--body); font-size: 14px; }
+      .refs li + li { margin-top: 10px; }
+
+      .nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        height: var(--foot);
+        display: grid;
+        grid-template-columns: 220px 1fr auto;
+        align-items: center;
+        gap: 16px;
+        padding: 0 32px;
+        background: var(--canvas);
+        border-top: 1px solid var(--hairline);
+      }
+      .hint { font-size: 13px; color: var(--muted); }
+      .kbd {
+        display: inline-block;
+        min-width: 22px;
+        padding: 2px 6px;
+        border: 1px solid var(--hairline-strong);
+        border-radius: 4px;
+        background: var(--surface-card);
+        font-size: 12px;
+        font-weight: 500;
+        text-align: center;
+        color: var(--ink);
+      }
+      .pager { display: flex; justify-content: center; gap: 8px; }
+      .pager button {
+        width: 8px;
+        height: 8px;
+        padding: 0;
+        border: 0;
+        border-radius: 9999px;
+        background: var(--hairline-strong);
+        cursor: pointer;
+      }
+      .pager button.is-on { background: var(--ink); }
+      .actions { display: flex; gap: 8px; }
+      .btn {
+        height: 40px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .btn-secondary { background: var(--surface-card); color: var(--ink); border: 1px solid var(--hairline-strong); }
+      .btn-primary { background: var(--primary); color: var(--on-primary); border: 0; }
+      .btn-primary:hover, .btn-primary:focus-visible { background: var(--primary-active); }
+      .btn:disabled { color: var(--muted-soft); background: var(--surface-strong); border-color: transparent; cursor: default; }
+      .btn-primary:disabled { color: var(--on-primary); background: var(--muted-soft); }
+
+      /* SVG */
+      .svg-box { fill: var(--surface-card); stroke: var(--hairline-strong); }
+      .svg-box-hi { fill: #fff5ef; stroke: var(--primary); }
+      .svg-t { font: 600 13px Inter, sans-serif; fill: var(--ink); }
+      .svg-s { font: 400 11px "JetBrains Mono", monospace; fill: var(--muted); }
+      .svg-l { stroke: var(--hairline-strong); stroke-width: 1.5; fill: none; }
+      .svg-a { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+      .svg-ok { stroke: var(--success); stroke-width: 1.5; fill: none; }
+      .svg-bad { stroke: var(--error); stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+      .svg-m { font: 400 11px "JetBrains Mono", monospace; fill: var(--body); }
+
+      @media (max-width: 1024px) {
+        .slide { padding-left: 32px; padding-right: 32px; }
+        .grid-4 { grid-template-columns: 1fr 1fr; }
+        .split { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 720px) {
+        h1 { font-size: 32px; letter-spacing: -0.02em; }
+        .slide { padding-left: 16px; padding-right: 16px; }
+        .top-nav, .nav { padding-left: 16px; padding-right: 16px; }
+        .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        .hint { display: none; }
+        .nav { grid-template-columns: 1fr auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top-nav">
+      <p class="wordmark">Inner View <span>· Serviços web</span></p>
+      <div class="counter" data-count>01 / 05</div>
+    </header>
+
+    <main class="deck">
+
+      <!-- 2. Definição -->
+      <section class="slide is-active" id="definicao">
+        <div class="inner">
+          <p class="eyebrow">9.1 · Introdução</p>
+          <h2>O que é um serviço web</h2>
+          <p class="closing" style="margin:0 0 24px">
+            É um programa que oferece <strong>operações pela internet</strong> para que
+            <strong>outros programas</strong> as chamem. A conversa usa HTTP, as mensagens
+            seguem um formato padrão e cada serviço tem um endereço (URI).
+          </p>
+          <div class="grid grid-2">
+            <div class="card">
+              <p class="kicker">Site web · para pessoas</p>
+<pre><code>GET /imoveis/rlx-001
+
+<span class="c">← 200 text/html</span>
+&lt;h1&gt;Casa em Porto Alegre&lt;/h1&gt;
+&lt;img src="sala.jpg"&gt; …</code></pre>
+              <p style="margin-top:12px">Devolve uma <strong>página pronta</strong> para alguém ler. Mudar o layout não quebra ninguém.</p>
+            </div>
+            <div class="card accent">
+              <p class="kicker">Serviço web · para programas</p>
+<pre><code>GET /virtual-tours/rlx-001
+
+<span class="c">← 200 application/json</span>
+{ "id": "rlx-001", "status": "PUBLISHED",
+  "panoramas": [ … ] }</code></pre>
+              <p style="margin-top:12px">Devolve <strong>dados estruturados</strong> que o programa cliente usa. O formato é um contrato: mudar quebra o cliente.</p>
+            </div>
+          </div>
+          <div class="grid grid-4" style="margin-top:16px">
+            <div class="card small"><h3>HTTP</h3><p>Transporte comum a qualquer linguagem.</p></div>
+            <div class="card small"><h3>Formato padrão</h3><p>XML no livro, JSON no projeto.</p></div>
+            <div class="card small"><h3>URI</h3><p>Endereço de cada serviço ou recurso.</p></div>
+            <div class="card small"><h3>Descrição</h3><p>Documento que diz como chamar (WSDL, Swagger).</p></div>
+          </div>
+          <p class="note">
+            No Inner View, a <strong>API NestJS</strong> é o serviço web e o <strong>app Ionic</strong> é o programa
+            cliente. O app também consome um serviço web de terceiros, o <strong>ViaCEP</strong>.
+          </p>
+        </div>
+      </section>
+
+      <!-- 3. REST -->
+      <section class="slide" id="padrao-rest">
+        <div class="inner">
+          <p class="eyebrow">9.2 · Quadro REST · Fielding, 2000</p>
+          <h2>O padrão REST</h2>
+          <p class="closing" style="margin:0 0 24px">
+            <strong>REST</strong> (Representational State Transfer) é um estilo de arquitetura
+            descrito por Roy Fielding, um dos autores do HTTP. A ideia: em vez de chamar
+            funções remotas, o cliente <strong>manipula recursos</strong> com as operações que o
+            próprio HTTP já oferece.
+          </p>
+          <div class="grid grid-3">
+            <div class="card small">
+              <h3>1. Recursos com URI</h3>
+              <p>Tudo que o sistema expõe é um recurso com endereço próprio.</p>
+              <p><code>/properties/:id</code> · <code>/virtual-tours/:id</code></p>
+            </div>
+            <div class="card small accent">
+              <h3>2. Interface uniforme</h3>
+              <p>Poucas operações, iguais para todos os recursos: os verbos HTTP.</p>
+              <p><code>GET</code> lê · <code>POST</code> cria · <code>PATCH</code> altera · <code>DELETE</code> remove</p>
+            </div>
+            <div class="card small">
+              <h3>3. Representações</h3>
+              <p>O cliente recebe uma cópia do estado do recurso num formato.</p>
+              <p>Tour em JSON, thumbnail em <code>image/jpeg</code>.</p>
+            </div>
+            <div class="card small">
+              <h3>4. Sem estado</h3>
+              <p>Cada requisição traz tudo o que o servidor precisa. Nada fica guardado na memória da API.</p>
+              <p>O JWT vai em todo <code>Authorization: Bearer</code>.</p>
+            </div>
+            <div class="card small">
+              <h3>5. Cache</h3>
+              <p>Respostas podem dizer se podem ser reaproveitadas.</p>
+              <p>Thumbnail: <code>Cache-Control: public, max-age=3600</code>.</p>
+            </div>
+            <div class="card small">
+              <h3>6. Cliente-servidor em camadas</h3>
+              <p>Cliente e servidor evoluem separados, e no meio pode haver proxies.</p>
+              <p>App Ionic → proxy <code>/api</code> → API → PostgreSQL.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Descrição -->
+      <section class="slide" id="descricao">
+        <div class="inner">
+          <p class="eyebrow">9.3 · Descrição de serviço</p>
+          <h2>WSDL no livro, Swagger no projeto</h2>
+          <div class="grid grid-2">
+            <div class="card">
+              <p class="kicker">O que é WSDL</p>
+              <p>A <strong>Web Services Description Language</strong> é um documento XML que descreve um serviço web, como uma IDL. Com ela, um programa sabe como chamar o serviço sem ver o código do servidor e pode até gerar o cliente automaticamente.</p>
+              <ul class="list" style="margin-top:12px">
+                <li><strong>types</strong>: formato dos dados das mensagens</li>
+                <li><strong>interface</strong>: as operações oferecidas</li>
+                <li><strong>binding</strong>: protocolo e formato usados (SOAP, HTTP)</li>
+                <li><strong>service</strong>: o endereço (URI) onde o serviço está</li>
+              </ul>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th></th><th>WSDL</th><th>Swagger (OpenAPI)</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Estilo</strong></td><td>SOAP</td><td>REST</td></tr>
+                  <tr><td><strong>Formato</strong></td><td>XML</td><td>JSON ou YAML</td></tr>
+                  <tr><td><strong>Tipos</strong></td><td><code>types</code> (XML Schema)</td><td><code>schemas</code> (JSON Schema)</td></tr>
+                  <tr><td><strong>Operações</strong></td><td><code>interface</code>, uma por nome</td><td><code>paths</code>: URI + verbo HTTP</td></tr>
+                  <tr><td><strong>Protocolo</strong></td><td><code>binding</code></td><td>Sempre HTTP; <code>securitySchemes</code> para o JWT</td></tr>
+                  <tr><td><strong>Endereço</strong></td><td><code>service</code></td><td><code>servers</code></td></tr>
+                  <tr><td><strong>Para pessoas</strong></td><td>Difícil de ler</td><td>Página interativa para testar as rotas</td></tr>
+                </tbody>
+              </table>
+              <p class="note" style="padding:0 14px 14px">No Inner View, o Swagger fica em <code>/docs</code> e é gerado a partir dos decorators dos controllers (<code>@ApiOperation</code>, <code>@ApiBearerAuth</code>).</p>
+            </div>
+          </div>
+          <p class="note">Serviço de diretório (UDDI, 9.4): não usamos. O cliente já sabe o endereço da API pela configuração.</p>
+        </div>
+      </section>
+
+      <!-- 6. Segurança -->
+      <section class="slide" id="seguranca">
+        <div class="inner">
+          <p class="eyebrow">9.5 · Segurança</p>
+          <h2>Segurança</h2>
+          <div class="card" style="margin-bottom:16px">
+            <p class="kicker">O que o capítulo diz</p>
+            <p>O TLS protege só o <strong>canal</strong>, de ponta a ponta. Como uma mensagem de serviço web pode passar por intermediários, o livro apresenta a <strong>segurança XML</strong>: a <strong>XML Signature</strong> assina partes da mensagem (garante autoria e que nada foi alterado) e a <strong>XML Encryption</strong> cifra só as partes sigilosas. A proteção viaja junto com o documento.</p>
+          </div>
+          <div class="grid grid-3">
+            <div class="card small">
+              <h3>Canal</h3>
+              <p>HTTPS (TLS) em produção, com HSTS obrigando o navegador a nunca usar HTTP.</p>
+            </div>
+            <div class="card small accent">
+              <h3>Token assinado</h3>
+              <p>O JWT é assinado pela API e conferido a cada requisição. Se alguém mudar o conteúdo, a assinatura não bate, como na XML Signature.</p>
+            </div>
+            <div class="card small">
+              <h3>Permissão</h3>
+              <p>Guards por papel: só admin vê usuários e analytics. Cada imobiliária só acessa os próprios dados.</p>
+            </div>
+            <div class="card small">
+              <h3>Sessão revogável</h3>
+              <p>Access token dura 1 dia, refresh dura 7. O refresh só vale se a sessão existe no banco, guardada como hash bcrypt.</p>
+            </div>
+            <div class="card small">
+              <h3>Mensagens validadas</h3>
+              <p>Todo corpo passa pelo schema Zod antes da regra de negócio. Mensagem malformada volta 400.</p>
+            </div>
+            <div class="card small">
+              <h3>Token não vaza</h3>
+              <p>O interceptor não envia o JWT para serviços externos: a chamada ao ViaCEP sai sem credencial.</p>
+            </div>
+          </div>
+          <p class="note">Não usamos cifra de partes da mensagem (XML Encryption): a comunicação é direta entre cliente e API, sem intermediários, e o TLS já cifra a mensagem inteira.</p>
+        </div>
+      </section>
+
+      <!-- 8. Fechamento -->
+      <section class="slide" id="fechamento">
+        <div class="inner">
+          <p class="eyebrow">Fechamento · Serviços web e o Inner View</p>
+          <h2>O Inner View é um serviço web REST</h2>
+          <p>O <strong>Inner View</strong> é um sistema de tour virtual de imóveis. O corretor envia fotos 360° de cada cômodo e liga um cômodo ao outro por pontos clicáveis (hotspots). O visitante abre o link e anda pelo imóvel no navegador.</p>
+          <ul class="pipe" style="margin-top:16px">
+            <li><span class="side">Cliente · :4200</span><b>App Ionic / Angular</b>Telas do corretor e visualizador 360°</li>
+            <li><span class="side">Serviço web · :3000</span><b>API NestJS</b>Rotas REST, JWT, Swagger em <code>/docs</code></li>
+            <li><span class="side">Dados · :5432</span><b>PostgreSQL + Prisma</b>Imobiliárias, imóveis, tours, panoramas</li>
+          </ul>
+          <div class="grid grid-2">
+            <div class="card small">
+              <h3>Temos</h3>
+              <ul class="list">
+                <li>HTTP + JSON</li>
+                <li>Recursos com URI</li>
+                <li>Descrição no Swagger</li>
+                <li>JWT e HTTPS</li>
+              </ul>
+            </div>
+            <div class="card small accent">
+              <h3>Pode melhorar</h3>
+              <ul class="list">
+                <li>Habilitar CORS na API</li>
+                <li>Liberar <code>/embed</code> para iframes</li>
+                <li>Versionar a API (<code>/v1</code>)</li>
+              </ul>
+            </div>
+          </div>
+          <p class="names" style="margin-top:24px">
+            <span>Fabricio Varisco</span>
+            <span>Gustavo Potrich</span>
+            <span>Lucas Krug</span>
+            <span>Matheus Thiesen</span>
+          </p>
+          <p class="note">COULOURIS, G. et al. <em>Sistemas Distribuídos: Conceitos e Projeto</em>. 5. ed. Bookman, 2013. Cap. 9.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="nav">
+      <div class="hint">
+        <span class="kbd">←</span>
+        <span class="kbd">→</span>
+        setas para navegar
+      </div>
+      <div class="pager" data-pager></div>
+      <div class="actions">
+        <button class="btn btn-secondary" type="button" data-prev>Anterior</button>
+        <button class="btn btn-primary" type="button" data-next>Próximo</button>
+      </div>
+    </footer>
+
+    <script>
+      // Navegação do deck: setas, PageUp/PageDown, Home/End, pager e #hash.
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const count = document.querySelector("[data-count]");
+      const pager = document.querySelector("[data-pager]");
+      const prev = document.querySelector("[data-prev]");
+      const next = document.querySelector("[data-next]");
+      let index = 0;
+
+      slides.forEach((_, i) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("aria-label", "Slide " + (i + 1));
+        button.addEventListener("click", () => show(i));
+        pager.appendChild(button);
+      });
+
+      function show(i) {
+        index = Math.max(0, Math.min(slides.length - 1, i));
+        slides.forEach((slide, n) => slide.classList.toggle("is-active", n === index));
+        pager.querySelectorAll("button").forEach((button, n) => button.classList.toggle("is-on", n === index));
+        count.textContent = String(index + 1).padStart(2, "0") + " / " + String(slides.length).padStart(2, "0");
+        prev.disabled = index === 0;
+        next.disabled = index === slides.length - 1;
+        next.textContent = index === slides.length - 1 ? "Fim" : "Próximo";
+        const active = document.querySelector(".slide.is-active");
+        if (active) active.scrollTop = 0;
+        if (location.hash !== "#" + slides[index].id) {
+          history.replaceState(null, "", "#" + slides[index].id);
+        }
+      }
+
+      prev.addEventListener("click", () => show(index - 1));
+      next.addEventListener("click", () => show(index + 1));
+      document.addEventListener("keydown", (event) => {
+        const tag = event.target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        if (event.key === "ArrowRight" || event.key === "PageDown") {
+          event.preventDefault();
+          show(index + 1);
+        } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+          event.preventDefault();
+          show(index - 1);
+        } else if (event.key === "Home") show(0);
+        else if (event.key === "End") show(slides.length - 1);
+      });
+
+      const start = slides.findIndex((slide) => "#" + slide.id === location.hash);
+      show(start === -1 ? 0 : start);
+    </script>
+  </body>
+</html>
